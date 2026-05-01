@@ -1,0 +1,174 @@
+{
+  "name": "OverovaciaKniha",
+  "type": "object",
+  "properties": {
+    "poradoveCislo": {
+      "type": "string",
+      "title": "Poradov\u00e9 \u010d\u00edslo"
+    },
+    "typOverenia": {
+      "type": "string",
+      "enum": [
+        "LISTINA",
+        "PODPIS"
+      ],
+      "title": "Typ overenia"
+    },
+    "datumOverenia": {
+      "type": "string",
+      "format": "date-time",
+      "title": "D\u00e1tum overenia"
+    },
+    "ziadatelMeno": {
+      "type": "string",
+      "title": "Meno \u017eiadate\u013ea"
+    },
+    "ziadatelPriezvisko": {
+      "type": "string",
+      "title": "Priezvisko \u017eiadate\u013ea"
+    },
+    "ziadatelTitulPred": {
+      "type": "string",
+      "title": "Titul pred"
+    },
+    "ziadatelTitulZa": {
+      "type": "string",
+      "title": "Titul za"
+    },
+    "rodneCislo": {
+      "type": "string",
+      "title": "Rodn\u00e9 \u010d\u00edslo (\u0161ifrovan\u00e9)"
+    },
+    "datumNarodenia": {
+      "type": "string",
+      "format": "date",
+      "title": "D\u00e1tum narodenia"
+    },
+    "adresaUlica": {
+      "type": "string",
+      "title": "Ulica"
+    },
+    "adresaCislo": {
+      "type": "string",
+      "title": "\u010c\u00edslo"
+    },
+    "adresaMesto": {
+      "type": "string",
+      "title": "Mesto"
+    },
+    "adresaPsc": {
+      "type": "string",
+      "title": "PS\u010c"
+    },
+    "adresaStat": {
+      "type": "string",
+      "title": "\u0160t\u00e1t",
+      "default": "SR"
+    },
+    "dokladTyp": {
+      "type": "string",
+      "enum": [
+        "OP",
+        "PAS",
+        "POVOLENIE_NA_POBYT",
+        "INE"
+      ],
+      "title": "Typ dokladu"
+    },
+    "dokladCislo": {
+      "type": "string",
+      "title": "\u010c\u00edslo dokladu (\u0161ifrovan\u00e9)"
+    },
+    "dokladPlatnostDo": {
+      "type": "string",
+      "format": "date",
+      "title": "Platnos\u0165 dokladu do"
+    },
+    "zdrojUdajov": {
+      "type": "string",
+      "enum": [
+        "eID_NFC",
+        "ePass_NFC",
+        "MANUAL"
+      ],
+      "title": "Zdroj \u00fadajov"
+    },
+    "listinaDruh": {
+      "type": "string",
+      "title": "Druh listiny"
+    },
+    "listinaJazyk": {
+      "type": "string",
+      "title": "Jazyk listiny",
+      "default": "SK"
+    },
+    "pocetListov": {
+      "type": "number",
+      "title": "Po\u010det listov"
+    },
+    "pocetStran": {
+      "type": "number",
+      "title": "Po\u010det str\u00e1n"
+    },
+    "pocetOvereni": {
+      "type": "number",
+      "title": "Po\u010det overen\u00ed",
+      "default": 1
+    },
+    "podpisPredZamestnancom": {
+      "type": "boolean",
+      "title": "Podpis pred zamestnancom"
+    },
+    "poplatokEur": {
+      "type": "number",
+      "title": "Poplatok (EUR)"
+    },
+    "oslobodenyOdPoplatku": {
+      "type": "boolean",
+      "title": "Osloboden\u00fd od poplatku"
+    },
+    "dovodOslobodenia": {
+      "type": "string",
+      "title": "D\u00f4vod oslobodenia"
+    },
+    "overovatelId": {
+      "type": "string",
+      "title": "Overovate\u013e (ID)"
+    },
+    "overovatelMeno": {
+      "type": "string",
+      "title": "Overovate\u013e (meno)"
+    },
+    "poznamka": {
+      "type": "string",
+      "title": "Pozn\u00e1mka"
+    },
+    "hashZaznamu": {
+      "type": "string",
+      "title": "Hash z\u00e1znamu"
+    },
+    "predchadzajuciHash": {
+      "type": "string",
+      "title": "Hash predch\u00e1dzaj\u00faceho z\u00e1znamu"
+    },
+    "stitokPdf": {
+      "type": "string",
+      "title": "\u0160t\u00edtok PDF"
+    },
+    "statnaPrislusnost": {
+      "type": "string",
+      "title": "\u0160t\u00e1tna pr\u00edslu\u0161nos\u0165"
+    },
+    "podpisCertifikatuPlatny": {
+      "type": "boolean",
+      "title": "Certifik\u00e1t platn\u00fd"
+    }
+  },
+  "required": [
+    "typOverenia",
+    "ziadatelMeno",
+    "ziadatelPriezvisko",
+    "dokladTyp",
+    "zdrojUdajov"
+  ]
+}

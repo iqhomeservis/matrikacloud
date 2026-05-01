@@ -1,0 +1,61 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "akcia": {
+      "type": "string",
+      "enum": [
+        "CREATE",
+        "READ",
+        "UPDATE",
+        "EXPORT",
+        "RESTORE",
+        "LOGIN",
+        "LOGOUT",
+        "PRINT"
+      ],
+      "title": "Akcia"
+    },
+    "pouzivatelId": {
+      "type": "string",
+      "title": "Pou\u017e\u00edvate\u013e (ID)"
+    },
+    "pouzivatelMeno": {
+      "type": "string",
+      "title": "Pou\u017e\u00edvate\u013e (meno)"
+    },
+    "casovaPecat": {
+      "type": "string",
+      "format": "date-time",
+      "title": "\u010casov\u00e1 pe\u010da\u0165"
+    },
+    "refZaznamId": {
+      "type": "string",
+      "title": "Referencia na z\u00e1znam"
+    },
+    "refPoradoveCislo": {
+      "type": "string",
+      "title": "Poradov\u00e9 \u010d\u00edslo z\u00e1znamu"
+    },
+    "hashPred": {
+      "type": "string",
+      "title": "Hash pred"
+    },
+    "hashPo": {
+      "type": "string",
+      "title": "Hash po"
+    },
+    "popis": {
+      "type": "string",
+      "title": "Popis akcie"
+    },
+    "ipAdresa": {
+      "type": "string",
+      "title": "IP adresa"
+    }
+  },
+  "required": [
+    "akcia",
+    "casovaPecat"
+  ]
+}

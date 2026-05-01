@@ -1,0 +1,54 @@
+{
+  "name": "Zaloha",
+  "type": "object",
+  "properties": {
+    "casZalohy": {
+      "type": "string",
+      "format": "date-time",
+      "title": "\u010cas z\u00e1lohy"
+    },
+    "typZalohy": {
+      "type": "string",
+      "enum": [
+        "LOKALNA",
+        "USB",
+        "SERVER"
+      ],
+      "title": "Typ z\u00e1lohy"
+    },
+    "cestaSuboru": {
+      "type": "string",
+      "title": "Cesta k s\u00faboru"
+    },
+    "hashSuboru": {
+      "type": "string",
+      "title": "Hash s\u00faboru (SHA-256)"
+    },
+    "pocetZaznamov": {
+      "type": "number",
+      "title": "Po\u010det z\u00e1znamov"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OK",
+        "FAILED",
+        "VERIFIED"
+      ],
+      "title": "Status"
+    },
+    "casOverenia": {
+      "type": "string",
+      "format": "date-time",
+      "title": "\u010cas overenia"
+    },
+    "poznamka": {
+      "type": "string",
+      "title": "Pozn\u00e1mka"
+    }
+  },
+  "required": [
+    "typZalohy",
+    "status"
+  ]
+}

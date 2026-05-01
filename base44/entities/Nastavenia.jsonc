@@ -1,0 +1,79 @@
+{
+  "name": "Nastavenia",
+  "type": "object",
+  "properties": {
+    "obecNazov": {
+      "type": "string",
+      "title": "N\u00e1zov obce"
+    },
+    "obecIco": {
+      "type": "string",
+      "title": "I\u010cO obce"
+    },
+    "adresaUradu": {
+      "type": "string",
+      "title": "Adresa \u00faradu"
+    },
+    "kraj": {
+      "type": "string",
+      "title": "Kraj"
+    },
+    "okres": {
+      "type": "string",
+      "title": "Okres"
+    },
+    "overovatelMeno": {
+      "type": "string",
+      "title": "Meno overovate\u013ea"
+    },
+    "overovatelFunkcia": {
+      "type": "string",
+      "title": "Funkcia overovate\u013ea"
+    },
+    "poradoveCisloFormat": {
+      "type": "string",
+      "title": "Form\u00e1t poradov\u00e9ho \u010d\u00edsla",
+      "default": "O/{ROK}/{NNNNN}"
+    },
+    "rokAktualny": {
+      "type": "number",
+      "title": "Aktu\u00e1lny rok"
+    },
+    "sablonaDolozkyListina": {
+      "type": "string",
+      "title": "\u0160abl\u00f3na dolo\u017eky \u2014 listina"
+    },
+    "sablonaDolozkyPodpis": {
+      "type": "string",
+      "title": "\u0160abl\u00f3na dolo\u017eky \u2014 podpis"
+    },
+    "poplatokListina": {
+      "type": "number",
+      "title": "Poplatok za listinu (EUR)",
+      "default": 2
+    },
+    "poplatokPodpis": {
+      "type": "number",
+      "title": "Poplatok za podpis (EUR)",
+      "default": 2
+    },
+    "bridgeUrl": {
+      "type": "string",
+      "title": "URL Bridge service",
+      "default": "https://localhost:8443"
+    },
+    "bridgeToken": {
+      "type": "string",
+      "title": "Bridge token"
+    },
+    "zvukovySignal": {
+      "type": "boolean",
+      "title": "Zvukov\u00fd sign\u00e1l",
+      "default": true
+    }
+  },
+  "required": [
+    "obecNazov",
+    "obecIco"
+  ]
+}
