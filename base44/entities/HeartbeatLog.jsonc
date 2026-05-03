@@ -47,5 +47,14 @@
   "required": [
     "typ",
     "vysledok"
-  ]
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

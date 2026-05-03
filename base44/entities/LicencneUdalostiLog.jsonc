@@ -43,5 +43,14 @@
   "required": [
     "udalost",
     "cas"
-  ]
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
