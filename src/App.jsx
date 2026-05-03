@@ -6,6 +6,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
+import LicenciaGuard from './components/LicenciaGuard';
+import Aktivacia from './pages/Aktivacia';
 import NovyZaznam from './pages/NovyZaznam';
 import KnihaZaznamov from './pages/KnihaZaznamov';
 import Nastavenia from './pages/Nastavenia';
@@ -37,13 +39,16 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<NovyZaznam />} />
-        <Route path="/kniha" element={<KnihaZaznamov />} />
-        <Route path="/nastavenia" element={<Nastavenia />} />
-        <Route path="/audit" element={<AuditLogPage />} />
-        <Route path="/zalohy" element={<ZalohyIntegrita />} />
-        <Route path="*" element={<PageNotFound />} />
+      <Route path="/aktivacia" element={<Aktivacia />} />
+      <Route element={<LicenciaGuard />}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<NovyZaznam />} />
+          <Route path="/kniha" element={<KnihaZaznamov />} />
+          <Route path="/nastavenia" element={<Nastavenia />} />
+          <Route path="/audit" element={<AuditLogPage />} />
+          <Route path="/zalohy" element={<ZalohyIntegrita />} />
+          <Route path="*" element={<PageNotFound />} />
+        </Route>
       </Route>
     </Routes>
   );

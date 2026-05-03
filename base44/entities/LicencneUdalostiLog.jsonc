@@ -1,0 +1,47 @@
+{
+  "name": "LicencneUdalostiLog",
+  "type": "object",
+  "properties": {
+    "cas": {
+      "type": "string",
+      "format": "date-time",
+      "title": "\u010cas"
+    },
+    "udalost": {
+      "type": "string",
+      "enum": [
+        "PRVA_AKTIVACIA",
+        "PREDLZENIE",
+        "POZASTAVENIE",
+        "OBNOVENIE",
+        "PRENOS_HW",
+        "ZMENA_EDICIE",
+        "ANOMALIA_DETEKOVANA",
+        "INTEGRITY_FAIL",
+        "RESTRICTED_MODE",
+        "REACTIVATED"
+      ],
+      "title": "Udalos\u0165"
+    },
+    "detail": {
+      "type": "string",
+      "title": "Detail"
+    },
+    "predchadzajuciStav": {
+      "type": "string",
+      "title": "Predch\u00e1dzaj\u00faci stav"
+    },
+    "novyStav": {
+      "type": "string",
+      "title": "Nov\u00fd stav"
+    },
+    "vykonalAdmin": {
+      "type": "boolean",
+      "title": "Vykonal admin"
+    }
+  },
+  "required": [
+    "udalost",
+    "cas"
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "name": "Licencia",
+  "type": "object",
+  "properties": {
+    "licenseId": {
+      "type": "string",
+      "title": "License ID"
+    },
+    "licencnyKluc": {
+      "type": "string",
+      "title": "Licen\u010dn\u00fd k\u013e\u00fa\u010d"
+    },
+    "klientId": {
+      "type": "string",
+      "title": "Klient ID"
+    },
+    "obecIco": {
+      "type": "string",
+      "title": "I\u010cO obce"
+    },
+    "obecNazov": {
+      "type": "string",
+      "title": "N\u00e1zov obce"
+    },
+    "kontaktEmail": {
+      "type": "string",
+      "title": "Kontaktn\u00fd e-mail"
+    },
+    "edicia": {
+      "type": "string",
+      "enum": [
+        "BASIC",
+        "STANDARD",
+        "PREMIUM",
+        "TRIAL"
+      ],
+      "title": "Ed\u00edcia"
+    },
+    "maxStanic": {
+      "type": "integer",
+      "title": "Max stan\u00edc",
+      "default": 1
+    },
+    "aktivovanaDna": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Aktivovan\u00e1 d\u0148a"
+    },
+    "platnostDo": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Platnos\u0165 do"
+    },
+    "podporaDo": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Podpora do"
+    },
+    "aktivneFunkcie": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Akt\u00edvne funkcie"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "NOT_ACTIVATED",
+        "ACTIVE",
+        "OFFLINE_GRACE",
+        "RESTRICTED",
+        "REVOKED",
+        "TRIAL"
+      ],
+      "title": "Status",
+      "default": "NOT_ACTIVATED"
+    },
+    "hardwareFingerprint": {
+      "type": "string",
+      "title": "HW fingerprint (enc.)"
+    },
+    "hostname": {
+      "type": "string",
+      "title": "Hostname"
+    },
+    "osVersion": {
+      "type": "string",
+      "title": "OS verzia"
+    },
+    "verziaApp": {
+      "type": "string",
+      "title": "Verzia aplik\u00e1cie"
+    },
+    "posledneOverenie": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Posledn\u00e9 overenie"
+    },
+    "offlineDniPocet": {
+      "type": "integer",
+      "title": "Po\u010det offline dn\u00ed",
+      "default": 0
+    },
+    "licencnySuborPodpis": {
+      "type": "string",
+      "title": "Podpis licen\u010dn\u00e9ho s\u00faboru (enc.)"
+    },
+    "licencnySuborPayload": {
+      "type": "string",
+      "title": "Payload licen\u010dn\u00e9ho s\u00faboru (enc.)"
+    }
+  },
+  "required": [
+    "edicia",
+    "status"
+  ]
+}

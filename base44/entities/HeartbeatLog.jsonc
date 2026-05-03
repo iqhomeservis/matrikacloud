@@ -1,0 +1,51 @@
+{
+  "name": "HeartbeatLog",
+  "type": "object",
+  "properties": {
+    "cas": {
+      "type": "string",
+      "format": "date-time",
+      "title": "\u010cas"
+    },
+    "typ": {
+      "type": "string",
+      "enum": [
+        "ACTIVATION",
+        "HEARTBEAT",
+        "VALIDATION",
+        "DEACTIVATION",
+        "ERROR"
+      ],
+      "title": "Typ"
+    },
+    "vysledok": {
+      "type": "string",
+      "enum": [
+        "SUCCESS",
+        "FAILED",
+        "OFFLINE"
+      ],
+      "title": "V\u00fdsledok"
+    },
+    "responseStatus": {
+      "type": "string",
+      "title": "Response status"
+    },
+    "chybaText": {
+      "type": "string",
+      "title": "Text chyby"
+    },
+    "pocetZaznamovVKnihe": {
+      "type": "integer",
+      "title": "Po\u010det z\u00e1znamov v knihe"
+    },
+    "ipAdresa": {
+      "type": "string",
+      "title": "IP adresa"
+    }
+  },
+  "required": [
+    "typ",
+    "vysledok"
+  ]
+}
