@@ -50,7 +50,16 @@
   ],
   "rls": {
     "create": {},
-    "read": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "nonexistent_role"
+      }
+    },
     "delete": {
       "user_condition": {
         "role": "admin"
