@@ -83,13 +83,11 @@ export default function Aktivacia() {
     return Object.keys(errs).length === 0;
   };
 
-  const isFormComplete = () =>
-    validateLicenseKey(form.licencnyKluc) &&
-    validateICO(form.obecIco) &&
-    form.obecNazov.length >= 3 &&
-    form.kontaktEmail.length > 0 &&
-    eula &&
-    telemetria;
+  const keyValid = validateLicenseKey(form.licencnyKluc);
+  const icoValid = /^\d{8}$/.test(form.obecIco);
+  const obecValid = form.obecNazov.length >= 3;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.kontaktEmail);
+  const isFormComplete = keyValid && icoValid && obecValid && emailValid && eula && telemetria;
 
   const activate = async () => {
     if (!validate(false)) return;
@@ -375,13 +373,18 @@ export default function Aktivacia() {
               </div>
               <Button
                 onClick={activate}
-                disabled={!isFormComplete() || loading}
+                disabled={!isFormComplete || loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-10"
               >
                 AKTIVOVAŤ
               </Button>
             </div>
           </div>
+          {import.meta.env.DEV && (
+            <p className="text-[10px] text-slate-400 mt-2 text-right font-mono">
+              keyValid: {keyValid ? "✅" : "❌"} icoValid: {icoValid ? "✅" : "❌"} obecValid: {obecValid ? "✅" : "❌"} emailValid: {emailValid ? "✅" : "❌"} eula: {eula ? "✅" : "❌"} telemetria: {telemetria ? "✅" : "❌"}
+            </p>
+          )}
         </div>
       </div>
     </div>
