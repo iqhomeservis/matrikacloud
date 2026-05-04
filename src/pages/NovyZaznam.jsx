@@ -53,6 +53,7 @@ export default function NovyZaznam() {
   const [rcVisible, setRcVisible] = useState(false);
   const [rcRaw, setRcRaw] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldSources, setFieldSources] = useState({});
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -74,6 +75,10 @@ export default function NovyZaznam() {
     setSource(data.source);
     const rc = data.rodneCislo || "";
     setRcRaw(rc);
+    const scannerKeys = ["ziadatelMeno","ziadatelPriezvisko","rodneCislo","datumNarodenia",
+      "adresaUlica","adresaCislo","adresaMesto","adresaPsc","dokladCislo","dokladPlatnostDo"];
+    const scannerFields = Object.fromEntries(scannerKeys.map(k => [k, "scanner"]));
+    setFieldSources(fs => ({ ...fs, ...scannerFields }));
     setForm(f => ({
       ...f,
       ziadatelMeno: data.meno || "",
@@ -202,6 +207,7 @@ export default function NovyZaznam() {
     setRcRaw("");
     setRcVisible(false);
     setFieldErrors({});
+    setFieldSources({});
     setSource(null);
     toast.info("Formulár vymazaný");
   };
@@ -222,12 +228,41 @@ export default function NovyZaznam() {
     if (val) setFieldErrors(fe => ({ ...fe, rodneCislo: false }));
   };
 
-  const fieldClass = (fromChip) =>
-    fromChip && source
-      ? source === "eID_NFC"
-        ? "border-green-400 bg-green-50"
-        : "border-blue-400 bg-blue-50"
-      : "";
+  const markManual = (field) => setFieldSources(fs => ({ ...fs, [field]: "manual" }));
+
+  const srcStyle = (field, value, isError) => {
+    if (!value) return {};
+    if (isError) return { borderLeft: "4px solid #dc2626" };
+    const s = fieldSources[field];
+    if (s === "scanner") return { borderLeft: "4px solid #16a34a" };
+    if (s === "manual") return { borderLeft: "4px solid #ca8a04" };
+    return {};
+  };
+
+  const srcIcon = (field, value, isError) => {
+    if (!value) return null;
+    if (isError) return { icon: "⚠️", title: "Chyba" };
+    const s = fieldSources[field];
+    if (s === "scanner") return { icon: "🆔", title: "Načítané zo skenera" };
+    if (s === "manual") return { icon: "✍️", title: "Manuálne zadané" };
+    return null;
+  };
+
+  const FieldWrap = ({ field, value, isError, children, extraRight }) => {
+    const ico = srcIcon(field, value, isError);
+    return (
+      <div className="relative" style={srcStyle(field, value, isError)}>
+        {children}
+        {ico && (
+          <span
+            title={ico.title}
+            className="absolute top-1/2 -translate-y-1/2 text-[11px] leading-none pointer-events-none"
+            style={{ right: extraRight || "8px" }}
+          >{ico.icon}</span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-full flex flex-col">
@@ -288,21 +323,25 @@ export default function NovyZaznam() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Meno *</Label>
-                <Input
-                  value={form.ziadatelMeno}
-                  onChange={e => { set("ziadatelMeno", e.target.value); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelMeno: false })); }}
-                  className={`h-10 ${fieldClass(true)} ${fieldErrors.ziadatelMeno ? "border-red-400" : ""}`}
-                  placeholder="Ján"
-                />
+                <FieldWrap field="ziadatelMeno" value={form.ziadatelMeno} isError={fieldErrors.ziadatelMeno}>
+                  <Input
+                    value={form.ziadatelMeno}
+                    onChange={e => { set("ziadatelMeno", e.target.value); markManual("ziadatelMeno"); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelMeno: false })); }}
+                    className={`h-10 pr-7 ${fieldErrors.ziadatelMeno ? "border-red-400" : ""}`}
+                    placeholder="Ján"
+                  />
+                </FieldWrap>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Priezvisko *</Label>
-                <Input
-                  value={form.ziadatelPriezvisko}
-                  onChange={e => { set("ziadatelPriezvisko", e.target.value); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelPriezvisko: false })); }}
-                  className={`h-10 ${fieldClass(true)} ${fieldErrors.ziadatelPriezvisko ? "border-red-400" : ""}`}
-                  placeholder="Vzorný"
-                />
+                <FieldWrap field="ziadatelPriezvisko" value={form.ziadatelPriezvisko} isError={fieldErrors.ziadatelPriezvisko}>
+                  <Input
+                    value={form.ziadatelPriezvisko}
+                    onChange={e => { set("ziadatelPriezvisko", e.target.value); markManual("ziadatelPriezvisko"); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelPriezvisko: false })); }}
+                    className={`h-10 pr-7 ${fieldErrors.ziadatelPriezvisko ? "border-red-400" : ""}`}
+                    placeholder="Vzorný"
+                  />
+                </FieldWrap>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Titul pred</Label>
@@ -314,14 +353,14 @@ export default function NovyZaznam() {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Rodné číslo *</Label>
-                <div className="relative">
+                <FieldWrap field="rodneCislo" value={rcRaw} isError={fieldErrors.rodneCislo} extraRight="32px">
                   <Input
                     value={rcVisible ? rcRaw : (document.activeElement === document.getElementById("rc-input") ? rcRaw : maskRC(rcRaw))}
                     id="rc-input"
-                    onChange={handleRcChange}
+                    onChange={e => { handleRcChange(e); markManual("rodneCislo"); }}
                     onFocus={() => setRcVisible(true)}
                     onBlur={() => setRcVisible(false)}
-                    className={`h-10 font-mono pr-9 ${fieldClass(true)} ${fieldErrors.rodneCislo ? "border-red-400" : ""}`}
+                    className={`h-10 font-mono pr-12 ${fieldErrors.rodneCislo ? "border-red-400" : ""}`}
                     placeholder="780314/1234"
                     maxLength={11}
                   />
@@ -333,16 +372,18 @@ export default function NovyZaznam() {
                   >
                     {rcVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
-                </div>
+                </FieldWrap>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Dátum narodenia</Label>
-                <Input
-                  type="date"
-                  value={form.datumNarodenia}
-                  onChange={e => set("datumNarodenia", e.target.value)}
-                  className={`h-10 ${fieldClass(true)}`}
-                />
+                <FieldWrap field="datumNarodenia" value={form.datumNarodenia}>
+                  <Input
+                    type="date"
+                    value={form.datumNarodenia}
+                    onChange={e => { set("datumNarodenia", e.target.value); markManual("datumNarodenia"); }}
+                    className="h-10 pr-7"
+                  />
+                </FieldWrap>
               </div>
             </div>
 
@@ -352,19 +393,27 @@ export default function NovyZaznam() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Ulica</Label>
-                  <Input value={form.adresaUlica} onChange={e => set("adresaUlica", e.target.value)} className={`h-10 ${fieldClass(true)}`} placeholder="Hlavná" />
+                  <FieldWrap field="adresaUlica" value={form.adresaUlica}>
+                    <Input value={form.adresaUlica} onChange={e => { set("adresaUlica", e.target.value); markManual("adresaUlica"); }} className="h-10 pr-7" placeholder="Hlavná" />
+                  </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Číslo</Label>
-                  <Input value={form.adresaCislo} onChange={e => set("adresaCislo", e.target.value)} className={`h-10 ${fieldClass(true)}`} placeholder="12" />
+                  <FieldWrap field="adresaCislo" value={form.adresaCislo}>
+                    <Input value={form.adresaCislo} onChange={e => { set("adresaCislo", e.target.value); markManual("adresaCislo"); }} className="h-10 pr-7" placeholder="12" />
+                  </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Mesto</Label>
-                  <Input value={form.adresaMesto} onChange={e => set("adresaMesto", e.target.value)} className={`h-10 ${fieldClass(true)}`} placeholder="Prešov" />
+                  <FieldWrap field="adresaMesto" value={form.adresaMesto}>
+                    <Input value={form.adresaMesto} onChange={e => { set("adresaMesto", e.target.value); markManual("adresaMesto"); }} className="h-10 pr-7" placeholder="Prešov" />
+                  </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">PSČ</Label>
-                  <Input value={form.adresaPsc} onChange={e => set("adresaPsc", e.target.value)} className={`h-10 ${fieldClass(true)}`} placeholder="08001" />
+                  <FieldWrap field="adresaPsc" value={form.adresaPsc}>
+                    <Input value={form.adresaPsc} onChange={e => { set("adresaPsc", e.target.value); markManual("adresaPsc"); }} className="h-10 pr-7" placeholder="08001" />
+                  </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Štát</Label>
@@ -393,11 +442,15 @@ export default function NovyZaznam() {
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Číslo dokladu</Label>
-                  <Input value={form.dokladCislo} onChange={e => set("dokladCislo", e.target.value)} className={`h-10 font-mono ${fieldClass(true)}`} placeholder="SK1234567" />
+                  <FieldWrap field="dokladCislo" value={form.dokladCislo}>
+                    <Input value={form.dokladCislo} onChange={e => { set("dokladCislo", e.target.value); markManual("dokladCislo"); }} className="h-10 font-mono pr-7" placeholder="SK1234567" />
+                  </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Platnosť do</Label>
-                  <Input type="date" value={form.dokladPlatnostDo} onChange={e => set("dokladPlatnostDo", e.target.value)} className={`h-10 ${fieldClass(true)}`} />
+                  <FieldWrap field="dokladPlatnostDo" value={form.dokladPlatnostDo}>
+                    <Input type="date" value={form.dokladPlatnostDo} onChange={e => { set("dokladPlatnostDo", e.target.value); markManual("dokladPlatnostDo"); }} className="h-10 pr-7" />
+                  </FieldWrap>
                 </div>
               </div>
             </div>
