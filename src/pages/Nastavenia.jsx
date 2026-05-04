@@ -7,6 +7,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Save, Wifi, Printer, CreditCard, TestTube, Users } from "lucide-react";
 
+const DEFAULT_DOLOZKA_LISTINA = `Podľa § 7 zákona NR SR č. 599/2001 Z. z. osvedčujem, že táto odpis (kópia) súhlasí s predloženou listinou.
+Listina obsahuje {pocetListov} listov a {pocetStran} strán.
+
+Poradové číslo: {poradoveCislo}
+Dátum: {datumOverenia}
+Vybrané poplatky: {poplatok} €`;
+
+const DEFAULT_DOLOZKA_PODPIS = `Podľa § 5 zákona NR SR č. 599/2001 Z. z. osvedčujem, že {meno} {priezvisko}, nar. {datumNarodenia}, trvale bytom {adresaPlna}, ktorého(ej) totožnosť som zistil(a) z {dokladTyp} č. {dokladCislo}, podpísal(a) túto listinu predo mnou vlastnou rukou.
+
+Poradové číslo: {poradoveCislo}
+Dátum: {datumOverenia}
+Vybrané poplatky: {poplatok} €`;
+
 export default function Nastavenia() {
   const [form, setForm] = useState({
     obecNazov: "",
@@ -155,25 +168,46 @@ export default function Nastavenia() {
         </div>
         <div className="space-y-4">
           <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Doložka — osvedčenie listiny</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-xs font-semibold text-slate-600">Doložka — osvedčenie listiny (§ 7)</Label>
+              <button
+                type="button"
+                onClick={() => set("sablonaDolozkyListina", DEFAULT_DOLOZKA_LISTINA)}
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+              >
+                ↩ Obnoviť na default znenie
+              </button>
+            </div>
             <Textarea
               value={form.sablonaDolozkyListina}
               onChange={e => set("sablonaDolozkyListina", e.target.value)}
-              rows={5}
+              rows={7}
               className="font-mono text-sm resize-none"
-              placeholder="Osvedčujem, že táto listina je zhodná s predloženou listinou..."
+              placeholder={DEFAULT_DOLOZKA_LISTINA}
             />
           </div>
           <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1 block">Doložka — osvedčenie podpisu</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-xs font-semibold text-slate-600">Doložka — osvedčenie podpisu (§ 5)</Label>
+              <button
+                type="button"
+                onClick={() => set("sablonaDolozkyPodpis", DEFAULT_DOLOZKA_PODPIS)}
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+              >
+                ↩ Obnoviť na default znenie
+              </button>
+            </div>
             <Textarea
               value={form.sablonaDolozkyPodpis}
               onChange={e => set("sablonaDolozkyPodpis", e.target.value)}
-              rows={5}
+              rows={8}
               className="font-mono text-sm resize-none"
-              placeholder="Osvedčujem, že {meno}, nar. {datumNarodenia}..."
+              placeholder={DEFAULT_DOLOZKA_PODPIS}
             />
           </div>
+        </div>
+        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <p className="text-xs text-amber-800">⚠ Pred produkčným nasadením overte znenie s vyhláškou MV SR č. 9/2009 Z. z.</p>
         </div>
       </div>
 
@@ -198,7 +232,7 @@ export default function Nastavenia() {
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div className={`rounded-lg p-3 text-sm font-medium flex items-center gap-2 ${bridgeTest.nfc === "ok" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
               <CreditCard className="w-4 h-4" />
-              NFC čítačka: {bridgeTest.nfc}
+              Skener dokladov: {bridgeTest.nfc}
             </div>
             <div className={`rounded-lg p-3 text-sm font-medium flex items-center gap-2 ${bridgeTest.printer === "ok" ? "bg-green-50 text-green-800 border border-green-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
               <Printer className="w-4 h-4" />
@@ -211,7 +245,7 @@ export default function Nastavenia() {
           <h3 className="text-sm font-bold text-slate-700 mb-2">Špecifikácia Bridge API (pre MatrikaBridge.exe)</h3>
           <div className="space-y-1 font-mono text-xs text-slate-600">
             <div><span className="text-green-600 font-bold">GET</span>  /api/health — heartbeat</div>
-            <div><span className="text-green-600 font-bold">GET</span>  /api/reader/status — stav NFC čítačky</div>
+            <div><span className="text-green-600 font-bold">GET</span>  /api/reader/status — stav skenera dokladov</div>
             <div><span className="text-blue-600 font-bold">POST</span> /api/reader/read — načítanie eID/pasu</div>
             <div><span className="text-green-600 font-bold">GET</span>  /api/printer/status — stav tlačiarne</div>
             <div><span className="text-blue-600 font-bold">POST</span> /api/printer/print — tlač ZPL II štítkov</div>

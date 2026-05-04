@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { CreditCard, Printer, Save, X, RotateCcw, ChevronRight } from "lucide-react";
+import { CreditCard, Printer, Save, X, RotateCcw, ChevronRight, Eye, EyeOff } from "lucide-react";
 import NfcSimulator from "../components/NfcSimulator";
 import SourceBadge from "../components/SourceBadge";
 import { generateHash, encryptField, formatPoradoveCislo, formatDateSK } from "../lib/matrikaUtils";
@@ -50,10 +50,14 @@ export default function NovyZaznam() {
   const [saving, setSaving] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
+  const [rcVisible, setRcVisible] = useState(false);
+  const [rcRaw, setRcRaw] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
+      if (document.activeElement?.tagName === "TEXTAREA") return;
       if (e.key === "F2") { e.preventDefault(); setNfcOpen(true); }
       if (e.key === "F3") { e.preventDefault(); setForm(f => ({ ...f, typOverenia: f.typOverenia === "LISTINA" ? "PODPIS" : "LISTINA" })); }
       if (e.key === "F4") { e.preventDefault(); handlePrintAndSave(); }
@@ -68,11 +72,13 @@ export default function NovyZaznam() {
 
   const handleNfcData = (data) => {
     setSource(data.source);
+    const rc = data.rodneCislo || "";
+    setRcRaw(rc);
     setForm(f => ({
       ...f,
       ziadatelMeno: data.meno || "",
       ziadatelPriezvisko: data.priezvisko || "",
-      rodneCislo: data.rodneCislo || "",
+      rodneCislo: rc,
       datumNarodenia: data.datumNarodenia || "",
       adresaUlica: data.adresaTrvalehoPobytu?.ulica || "",
       adresaCislo: data.adresaTrvalehoPobytu?.cislo || "",
@@ -119,11 +125,21 @@ export default function NovyZaznam() {
     return record;
   };
 
-  const handleSaveOnly = async () => {
-    if (!form.ziadatelMeno || !form.ziadatelPriezvisko) {
-      toast.error("Vyplňte meno a priezvisko žiadateľa");
-      return;
+  const validateRequired = () => {
+    const errs = {};
+    if (!form.ziadatelMeno) errs.ziadatelMeno = true;
+    if (!form.ziadatelPriezvisko) errs.ziadatelPriezvisko = true;
+    if (!rcRaw) errs.rodneCislo = true;
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      toast.error("Vyplňte povinné polia");
+      return false;
     }
+    return true;
+  };
+
+  const handleSaveOnly = async () => {
+    if (!validateRequired()) return;
     setSaving(true);
     const record = await buildRecord();
     const saved = await base44.entities.OverovaciaKniha.create(record);
@@ -145,10 +161,7 @@ export default function NovyZaznam() {
   };
 
   const handlePrintAndSave = async () => {
-    if (!form.ziadatelMeno || !form.ziadatelPriezvisko) {
-      toast.error("Vyplňte meno a priezvisko žiadateľa");
-      return;
-    }
+    if (!validateRequired()) return;
     setPrinting(true);
     const record = await buildRecord();
     const saved = await base44.entities.OverovaciaKniha.create(record);
@@ -186,8 +199,27 @@ export default function NovyZaznam() {
 
   const handleReset = () => {
     setForm(INITIAL_FORM);
+    setRcRaw("");
+    setRcVisible(false);
+    setFieldErrors({});
     setSource(null);
     toast.info("Formulár vymazaný");
+  };
+
+  const maskRC = (raw) => {
+    const digits = raw.replace(/\//g, "");
+    if (digits.length <= 6) return raw;
+    return "XXXXXX/" + digits.slice(6);
+  };
+
+  const handleRcChange = (e) => {
+    let val = e.target.value.replace(/[^0-9/]/g, "");
+    // auto-insert slash after 6 digits
+    const digitsOnly = val.replace(/\//g, "");
+    if (digitsOnly.length === 6 && !val.includes("/")) val = val + "/";
+    setRcRaw(val);
+    set("rodneCislo", val);
+    if (val) setFieldErrors(fe => ({ ...fe, rodneCislo: false }));
   };
 
   const fieldClass = (fromChip) =>
@@ -198,7 +230,8 @@ export default function NovyZaznam() {
       : "";
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <div className="min-h-full flex flex-col">
+    <div className="p-4 max-w-7xl mx-auto flex-1 pb-6">
       {nfcOpen && <NfcSimulator onDataReceived={handleNfcData} onClose={() => setNfcOpen(false)} />}
 
       {/* Header row */}
@@ -238,7 +271,7 @@ export default function NovyZaznam() {
             </div>
             <div className="text-left">
               <div className="text-xl font-bold">NAČÍTAŤ DOKLAD</div>
-              <div className="text-sm text-blue-200">Priložte OP alebo cestovný pas k NFC čítačke — F2</div>
+              <div className="text-sm text-blue-200">Vložte OP alebo cestovný pas do skenera — F2</div>
             </div>
             {source && (
               <div className="ml-auto">
@@ -257,8 +290,8 @@ export default function NovyZaznam() {
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Meno *</Label>
                 <Input
                   value={form.ziadatelMeno}
-                  onChange={e => set("ziadatelMeno", e.target.value)}
-                  className={`h-10 ${fieldClass(true)}`}
+                  onChange={e => { set("ziadatelMeno", e.target.value); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelMeno: false })); }}
+                  className={`h-10 ${fieldClass(true)} ${fieldErrors.ziadatelMeno ? "border-red-400" : ""}`}
                   placeholder="Ján"
                 />
               </div>
@@ -266,8 +299,8 @@ export default function NovyZaznam() {
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Priezvisko *</Label>
                 <Input
                   value={form.ziadatelPriezvisko}
-                  onChange={e => set("ziadatelPriezvisko", e.target.value)}
-                  className={`h-10 ${fieldClass(true)}`}
+                  onChange={e => { set("ziadatelPriezvisko", e.target.value); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelPriezvisko: false })); }}
+                  className={`h-10 ${fieldClass(true)} ${fieldErrors.ziadatelPriezvisko ? "border-red-400" : ""}`}
                   placeholder="Vzorný"
                 />
               </div>
@@ -280,13 +313,27 @@ export default function NovyZaznam() {
                 <Input value={form.ziadatelTitulZa} onChange={e => set("ziadatelTitulZa", e.target.value)} className="h-10" placeholder="PhD." />
               </div>
               <div>
-                <Label className="text-xs font-semibold text-slate-600 mb-1 block">Rodné číslo</Label>
-                <Input
-                  value={form.rodneCislo}
-                  onChange={e => set("rodneCislo", e.target.value)}
-                  className={`h-10 font-mono ${fieldClass(true)}`}
-                  placeholder="780314/1234"
-                />
+                <Label className="text-xs font-semibold text-slate-600 mb-1 block">Rodné číslo *</Label>
+                <div className="relative">
+                  <Input
+                    value={rcVisible ? rcRaw : (document.activeElement === document.getElementById("rc-input") ? rcRaw : maskRC(rcRaw))}
+                    id="rc-input"
+                    onChange={handleRcChange}
+                    onFocus={() => setRcVisible(true)}
+                    onBlur={() => setRcVisible(false)}
+                    className={`h-10 font-mono pr-9 ${fieldClass(true)} ${fieldErrors.rodneCislo ? "border-red-400" : ""}`}
+                    placeholder="780314/1234"
+                    maxLength={11}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setRcVisible(v => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                  >
+                    {rcVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Dátum narodenia</Label>
@@ -449,35 +496,6 @@ export default function NovyZaznam() {
             <Textarea value={form.poznamka} onChange={e => set("poznamka", e.target.value)} rows={2} className="resize-none" />
           </div>
 
-          {/* Akcie */}
-          <div className="space-y-2">
-            <Button
-              onClick={handlePrintAndSave}
-              disabled={printing || saving}
-              className="w-full h-14 bg-gov-blue hover:bg-gov-blue/90 text-white text-base font-bold rounded-xl shadow-lg"
-            >
-              <Printer className="w-5 h-5 mr-2" />
-              TLAČIŤ ŠTÍTKY — F4
-            </Button>
-            <Button
-              onClick={handleSaveOnly}
-              disabled={printing || saving}
-              variant="outline"
-              className="w-full h-11 border-gov-blue text-gov-blue hover:bg-blue-50 font-semibold rounded-xl"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Uložiť bez tlače — F8
-            </Button>
-            <Button
-              onClick={handleReset}
-              variant="ghost"
-              className="w-full h-10 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Zrušiť — Esc
-            </Button>
-          </div>
-
           {/* Last saved */}
           {lastSaved && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm">
@@ -499,6 +517,43 @@ export default function NovyZaznam() {
           </div>
         </div>
       </div>
+    </div>
+
+    {/* Sticky bottom action panel */}
+    <div className="sticky bottom-0 z-[100] bg-white border-t border-slate-200 shadow-[0_-2px_8px_rgba(0,0,0,0.1)] px-6 py-4 flex items-center justify-between">
+      <div className="text-xs text-slate-500">
+        {lastSaved && (
+          <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+            <span className="font-bold text-green-800">✓ Uložené:</span>{" "}
+            <span className="font-mono text-green-700">{lastSaved.poradoveCislo}</span>{" — "}
+            <span className="text-green-600">{lastSaved.ziadatelMeno} {lastSaved.ziadatelPriezvisko}</span>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleReset}
+          disabled={printing || saving}
+          className="border-2 border-slate-400 text-slate-600 bg-transparent rounded-lg px-4 py-2 text-sm font-medium hover:bg-slate-50 transition disabled:opacity-50"
+        >
+          ✖ Zrušiť (Esc)
+        </button>
+        <button
+          onClick={handleSaveOnly}
+          disabled={printing || saving}
+          className="bg-slate-500 hover:bg-slate-600 text-white rounded-lg px-6 py-2.5 text-sm font-semibold transition disabled:opacity-50 flex items-center gap-2"
+        >
+          <Save className="w-4 h-4" /> ULOŽIŤ BEZ TLAČE (F8)
+        </button>
+        <button
+          onClick={handlePrintAndSave}
+          disabled={printing || saving}
+          className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-8 py-3 text-base font-bold transition disabled:opacity-50 flex items-center gap-2 shadow-lg"
+        >
+          <Printer className="w-5 h-5" /> 🖨️ TLAČIŤ ŠTÍTKY (F4)
+        </button>
+      </div>
+    </div>
     </div>
   );
 }

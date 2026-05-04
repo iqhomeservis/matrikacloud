@@ -48,11 +48,11 @@ export default function StatusBar() {
 
   return (
     <div className="flex items-center gap-4 text-xs text-blue-100">
-      {/* NFC */}
-      <div className="flex items-center gap-1.5" title="NFC čítačka">
+      {/* Skener */}
+      <div className="flex items-center gap-1.5" title="Skener dokladov">
         <span className={`w-2 h-2 rounded-full ${dot(bridgeStatus.nfc)}`} />
         <CreditCard className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">NFC</span>
+        <span className="hidden sm:inline">Skener</span>
       </div>
 
       {/* Printer */}
