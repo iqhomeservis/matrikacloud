@@ -12,6 +12,37 @@ import NfcSimulator from "../components/NfcSimulator";
 import SourceBadge from "../components/SourceBadge";
 import { generateHash, encryptField, formatPoradoveCislo, formatDateSK } from "../lib/matrikaUtils";
 
+// FieldWrap must be outside component to avoid remount on every render
+function FieldWrap({ fieldSource, value, isError, children, extraRight }) {
+  const getStyle = () => {
+    if (!value) return {};
+    if (isError) return { borderLeft: "4px solid #dc2626" };
+    if (fieldSource === "scanner") return { borderLeft: "4px solid #16a34a" };
+    if (fieldSource === "manual") return { borderLeft: "4px solid #ca8a04" };
+    return {};
+  };
+  const getIcon = () => {
+    if (!value) return null;
+    if (isError) return { icon: "\u26a0\ufe0f", title: "Chyba" };
+    if (fieldSource === "scanner") return { icon: "\ud83c\udd94", title: "Na\u010d\u00edtan\u00e9 zo skenera" };
+    if (fieldSource === "manual") return { icon: "\u270d\ufe0f", title: "Manu\u00e1lne zadan\u00e9" };
+    return null;
+  };
+  const ico = getIcon();
+  return (
+    <div className="relative" style={getStyle()}>
+      {children}
+      {ico && (
+        <span
+          title={ico.title}
+          className="absolute top-1/2 -translate-y-1/2 text-[11px] leading-none pointer-events-none"
+          style={{ right: extraRight || "8px" }}
+        >{ico.icon}</span>
+      )}
+    </div>
+  );
+}
+
 const INITIAL_FORM = {
   typOverenia: "LISTINA",
   ziadatelMeno: "",
@@ -230,40 +261,6 @@ export default function NovyZaznam() {
 
   const markManual = (field) => setFieldSources(fs => ({ ...fs, [field]: "manual" }));
 
-  const srcStyle = (field, value, isError) => {
-    if (!value) return {};
-    if (isError) return { borderLeft: "4px solid #dc2626" };
-    const s = fieldSources[field];
-    if (s === "scanner") return { borderLeft: "4px solid #16a34a" };
-    if (s === "manual") return { borderLeft: "4px solid #ca8a04" };
-    return {};
-  };
-
-  const srcIcon = (field, value, isError) => {
-    if (!value) return null;
-    if (isError) return { icon: "⚠️", title: "Chyba" };
-    const s = fieldSources[field];
-    if (s === "scanner") return { icon: "🆔", title: "Načítané zo skenera" };
-    if (s === "manual") return { icon: "✍️", title: "Manuálne zadané" };
-    return null;
-  };
-
-  const FieldWrap = ({ field, value, isError, children, extraRight }) => {
-    const ico = srcIcon(field, value, isError);
-    return (
-      <div className="relative" style={srcStyle(field, value, isError)}>
-        {children}
-        {ico && (
-          <span
-            title={ico.title}
-            className="absolute top-1/2 -translate-y-1/2 text-[11px] leading-none pointer-events-none"
-            style={{ right: extraRight || "8px" }}
-          >{ico.icon}</span>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-full flex flex-col">
     <div className="p-4 max-w-7xl mx-auto flex-1 pb-6">
@@ -323,7 +320,7 @@ export default function NovyZaznam() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Meno *</Label>
-                <FieldWrap field="ziadatelMeno" value={form.ziadatelMeno} isError={fieldErrors.ziadatelMeno}>
+                <FieldWrap fieldSource={fieldSources["ziadatelMeno"]} value={form.ziadatelMeno} isError={fieldErrors.ziadatelMeno}>
                   <Input
                     value={form.ziadatelMeno}
                     onChange={e => { set("ziadatelMeno", e.target.value); markManual("ziadatelMeno"); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelMeno: false })); }}
@@ -334,7 +331,7 @@ export default function NovyZaznam() {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Priezvisko *</Label>
-                <FieldWrap field="ziadatelPriezvisko" value={form.ziadatelPriezvisko} isError={fieldErrors.ziadatelPriezvisko}>
+                <FieldWrap fieldSource={fieldSources["ziadatelPriezvisko"]} value={form.ziadatelPriezvisko} isError={fieldErrors.ziadatelPriezvisko}>
                   <Input
                     value={form.ziadatelPriezvisko}
                     onChange={e => { set("ziadatelPriezvisko", e.target.value); markManual("ziadatelPriezvisko"); if (e.target.value) setFieldErrors(fe => ({ ...fe, ziadatelPriezvisko: false })); }}
@@ -353,7 +350,7 @@ export default function NovyZaznam() {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Rodné číslo *</Label>
-                <FieldWrap field="rodneCislo" value={rcRaw} isError={fieldErrors.rodneCislo} extraRight="32px">
+                <FieldWrap fieldSource={fieldSources["rodneCislo"]} value={rcRaw} isError={fieldErrors.rodneCislo} extraRight="32px">
                   <Input
                     value={rcVisible ? rcRaw : (document.activeElement === document.getElementById("rc-input") ? rcRaw : maskRC(rcRaw))}
                     id="rc-input"
@@ -376,7 +373,7 @@ export default function NovyZaznam() {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Dátum narodenia</Label>
-                <FieldWrap field="datumNarodenia" value={form.datumNarodenia}>
+                <FieldWrap fieldSource={fieldSources["datumNarodenia"]} value={form.datumNarodenia}>
                   <Input
                     type="date"
                     value={form.datumNarodenia}
@@ -393,25 +390,25 @@ export default function NovyZaznam() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Ulica</Label>
-                  <FieldWrap field="adresaUlica" value={form.adresaUlica}>
+                  <FieldWrap fieldSource={fieldSources["adresaUlica"]} value={form.adresaUlica}>
                     <Input value={form.adresaUlica} onChange={e => { set("adresaUlica", e.target.value); markManual("adresaUlica"); }} className="h-10 pr-7" placeholder="Hlavná" />
                   </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Číslo</Label>
-                  <FieldWrap field="adresaCislo" value={form.adresaCislo}>
+                  <FieldWrap fieldSource={fieldSources["adresaCislo"]} value={form.adresaCislo}>
                     <Input value={form.adresaCislo} onChange={e => { set("adresaCislo", e.target.value); markManual("adresaCislo"); }} className="h-10 pr-7" placeholder="12" />
                   </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Mesto</Label>
-                  <FieldWrap field="adresaMesto" value={form.adresaMesto}>
+                  <FieldWrap fieldSource={fieldSources["adresaMesto"]} value={form.adresaMesto}>
                     <Input value={form.adresaMesto} onChange={e => { set("adresaMesto", e.target.value); markManual("adresaMesto"); }} className="h-10 pr-7" placeholder="Prešov" />
                   </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">PSČ</Label>
-                  <FieldWrap field="adresaPsc" value={form.adresaPsc}>
+                  <FieldWrap fieldSource={fieldSources["adresaPsc"]} value={form.adresaPsc}>
                     <Input value={form.adresaPsc} onChange={e => { set("adresaPsc", e.target.value); markManual("adresaPsc"); }} className="h-10 pr-7" placeholder="08001" />
                   </FieldWrap>
                 </div>
@@ -442,13 +439,13 @@ export default function NovyZaznam() {
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Číslo dokladu</Label>
-                  <FieldWrap field="dokladCislo" value={form.dokladCislo}>
+                  <FieldWrap fieldSource={fieldSources["dokladCislo"]} value={form.dokladCislo}>
                     <Input value={form.dokladCislo} onChange={e => { set("dokladCislo", e.target.value); markManual("dokladCislo"); }} className="h-10 font-mono pr-7" placeholder="SK1234567" />
                   </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Platnosť do</Label>
-                  <FieldWrap field="dokladPlatnostDo" value={form.dokladPlatnostDo}>
+                  <FieldWrap fieldSource={fieldSources["dokladPlatnostDo"]} value={form.dokladPlatnostDo}>
                     <Input type="date" value={form.dokladPlatnostDo} onChange={e => { set("dokladPlatnostDo", e.target.value); markManual("dokladPlatnostDo"); }} className="h-10 pr-7" />
                   </FieldWrap>
                 </div>
