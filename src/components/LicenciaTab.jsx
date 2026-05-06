@@ -10,13 +10,13 @@ const APP_VERSION = "1.0.0";
 const IS_DEV = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
 const FEATURES_MAP = [
-  { key: "OVEROVANIA_LISTIN", label: "Overovanie listín" },
-  { key: "OVEROVANIA_PODPISOV", label: "Overovanie podpisov" },
+  { key: "OVEROVANIE_LISTIN", label: "Overovanie listín" },
+  { key: "OVEROVANIE_PODPISOV", label: "Overovanie podpisov" },
   { key: "TLAC_STITKOV", label: "Tlač štítkov" },
   { key: "AUDIT_LOG", label: "Audit log" },
-  { key: "LOKALNE_ZALOHY", label: "Lokálne zálohy" },
-  { key: "CLOUD_ZALOHY", label: "Cloud zálohy" },
-  { key: "MESACNE_REPORTY", label: "Mesačné reporty" },
+  { key: "ZALOHY_LOKALNE", label: "Lokálne zálohy" },
+  { key: "ZALOHY_CLOUD", label: "Cloud zálohy" },
+  { key: "REPORTY_MESACNE", label: "Mesačné reporty" },
   { key: "SIETOVA_VERZIA", label: "Sieťová verzia" },
 ];
 
