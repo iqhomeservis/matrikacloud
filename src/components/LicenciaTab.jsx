@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const APP_VERSION = "1.0.0";
-const IS_DEV = true; // TODO: vrátiť na: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
 
 const FEATURES_MAP = [
   { key: "OVEROVANIE_LISTIN", label: "Overovanie listín" },
@@ -323,18 +323,6 @@ export default function LicenciaTab() {
               </div>
             </div>
 
-            {/* DEV mode */}
-            {IS_DEV && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                <h3 className="text-xs font-bold text-yellow-800 mb-3">🧪 DEV MODE</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" className="text-xs" onClick={() => devSimulate({ offlineDniPocet: 30 })}>TEST: 30d offline</Button>
-                  <Button size="sm" variant="outline" className="text-xs" onClick={() => devSimulate({ status: "RESTRICTED" })}>TEST: RESTRICTED</Button>
-                  <Button size="sm" variant="outline" className="text-xs" onClick={() => devSimulate({ status: "ACTIVE", offlineDniPocet: 0 })}>TEST: Späť ACTIVE</Button>
-                  <Button size="sm" variant="outline" className="text-xs" onClick={() => devSimulate({ status: "TRIAL", platnostDo: new Date(Date.now() + 5 * 86400000).toISOString() })}>TEST: TRIAL 5d</Button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

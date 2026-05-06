@@ -169,12 +169,7 @@ export default function ScannerPluginManager() {
     setHwResult("basic");
   };
 
-  const scanHwFull = async () => {
-    setHwScanning(true);
-    await new Promise(r => setTimeout(r, 1500));
-    setHwScanning(false);
-    setHwResult("full");
-  };
+
 
   if (loading) {
     return (
@@ -291,9 +286,7 @@ export default function ScannerPluginManager() {
               <><span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> Hľadám zariadenia…</>
             ) : "🔍 Skenovať pripojený HW"}
           </Button>
-          <Button onClick={scanHwFull} disabled={hwScanning} variant="outline" size="sm">
-            Simulovať plný setup
-          </Button>
+
         </div>
         {hwResult === "basic" && (
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
@@ -314,19 +307,7 @@ export default function ScannerPluginManager() {
             </div>
           </div>
         )}
-        {hwResult === "full" && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <div className="text-sm font-semibold text-green-800 mb-3">Detegované zariadenia:</div>
-            <div className="space-y-1.5">
-              {["✓ Skener dokumentov (USB)", "✓ Čítačka čipov (USB)", "✓ Tlačiareň štítkov (USB)"].map(s => (
-                <div key={s} className="flex items-center gap-2 text-sm text-green-700">
-                  <span className="w-2 h-2 rounded-full bg-green-500" />
-                  {s.replace("✓ ", "")}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* HW Katalóg */}
