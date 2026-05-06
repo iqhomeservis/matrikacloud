@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,17 @@ import { toast } from "sonner";
 import { CreditCard, Printer, Save, X, RotateCcw, ChevronRight, Eye, EyeOff } from "lucide-react";
 import NfcSimulator from "../components/NfcSimulator";
 import SourceBadge from "../components/SourceBadge";
+import CanDialog from "../components/CanDialog";
+import ScannerLoader from "../components/ScannerLoader";
 import { generateHash, encryptField, formatPoradoveCislo, formatDateSK } from "../lib/matrikaUtils";
+
+// Parse SK date format "DD.MM.YYYY" → "YYYY-MM-DD"
+function parseDateSK(str) {
+  if (!str) return "";
+  const parts = str.split(".");
+  if (parts.length === 3) return `${parts[2].trim()}-${parts[1].trim().padStart(2,"0")}-${parts[0].trim().padStart(2,"0")}`;
+  return str;
+}
 
 // FieldWrap must be outside component to avoid remount on every render
 function FieldWrap({ fieldSource, value, isError, children, extraRight }) {
@@ -85,6 +95,21 @@ export default function NovyZaznam() {
   const [rcRaw, setRcRaw] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [fieldSources, setFieldSources] = useState({});
+  const [activePlugin, setActivePlugin] = useState(null);
+  const [showCanDialog, setShowCanDialog] = useState(false);
+  const [showScanLoader, setShowScanLoader] = useState(false);
+  const [lastScanMeta, setLastScanMeta] = useState(null);
+
+  useEffect(() => { loadActivePlugin(); }, []);
+
+  const loadActivePlugin = async () => {
+    try {
+      const plugins = await base44.entities.ScannerPlugin.filter({ aktivny: true }, "-vytvoreny", 10);
+      // Prefer non-printer plugin
+      const scanner = plugins.find(p => p.category !== "UNIVERSAL_ZPL_PRINTER");
+      setActivePlugin(scanner || plugins[0] || null);
+    } catch { setActivePlugin(null); }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -101,6 +126,62 @@ export default function NovyZaznam() {
   }, [form]);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+
+  const handlePluginScan = () => {
+    if (!activePlugin || activePlugin.pluginId === "manual") return;
+    if (activePlugin.pluginId === "pcsc-nfc") {
+      setShowCanDialog(true);
+    } else {
+      setShowScanLoader(true);
+    }
+  };
+
+  const onScanComplete = (mockData) => {
+    setShowScanLoader(false);
+    const isNfc = activePlugin?.pluginId === "pcsc-nfc";
+    const rc = mockData.personalNumber || "";
+    setRcRaw(rc);
+    const scannerKeys = ["ziadatelMeno","ziadatelPriezvisko","rodneCislo","datumNarodenia",
+      "adresaUlica","adresaCislo","adresaMesto","adresaPsc","dokladCislo","dokladPlatnostDo"];
+    setFieldSources(Object.fromEntries(scannerKeys.map(k => [k, "scanner"])));
+    // Parse address
+    const addrParts = (mockData.address || "").split(",");
+    const streetPart = (addrParts[0] || "").trim().split(" ");
+    const cislo = streetPart.pop() || "";
+    const ulica = streetPart.join(" ");
+    const cityPart = (addrParts[1] || "").trim().split(" ");
+    const psc = cityPart.shift() || "";
+    const mesto = cityPart.join(" ");
+    const meta = {
+      pluginId: activePlugin.pluginId,
+      pluginNazov: activePlugin.nazov,
+      scanMethod: mockData.scanMethod || "MANUAL",
+      confidence: mockData.confidence || 1,
+      nfcVerified: mockData.nfcVerified || false,
+    };
+    setLastScanMeta(meta);
+    setForm(f => ({
+      ...f,
+      ziadatelMeno: mockData.givenName || "",
+      ziadatelPriezvisko: mockData.surname || "",
+      rodneCislo: rc,
+      datumNarodenia: mockData.dateOfBirth ? parseDateSK(mockData.dateOfBirth) : "",
+      adresaUlica: ulica,
+      adresaCislo: cislo,
+      adresaMesto: mesto,
+      adresaPsc: psc,
+      dokladTyp: mockData.documentType || "OP",
+      dokladCislo: mockData.documentNumber || "",
+      dokladPlatnostDo: mockData.expiryDate ? parseDateSK(mockData.expiryDate) : "",
+      zdrojUdajov: isNfc ? "eID_NFC" : "MANUAL",
+    }));
+    setSource(isNfc ? "eID_NFC" : "MANUAL");
+    if (isNfc) {
+      toast.success("✓ Čip načítaný, podpis overený");
+    } else {
+      toast.warning("Doklad naskenovaný. Skontrolujte údaje pred uložením.");
+    }
+  };
 
   const handleNfcData = (data) => {
     setSource(data.source);
@@ -131,6 +212,14 @@ export default function NovyZaznam() {
   };
 
   const buildRecord = async () => {
+    // refresh active plugin before save
+    const scanMeta = lastScanMeta || {
+      pluginId: activePlugin?.pluginId || "manual",
+      pluginNazov: activePlugin?.nazov || "Manuálne zadávanie",
+      scanMethod: "MANUAL",
+      confidence: 1,
+      nfcVerified: false,
+    };
     const user = await base44.auth.me();
     const now = new Date().toISOString();
     
@@ -152,6 +241,7 @@ export default function NovyZaznam() {
       overovatelId: user.id,
       overovatelMeno: `${user.full_name || user.email}`,
       predchadzajuciHash,
+      skenovacieMetadata: scanMeta,
     };
 
     // Compute hash
@@ -240,6 +330,7 @@ export default function NovyZaznam() {
     setFieldErrors({});
     setFieldSources({});
     setSource(null);
+    setLastScanMeta(null);
     toast.info("Formulár vymazaný");
   };
 
@@ -261,10 +352,33 @@ export default function NovyZaznam() {
 
   const markManual = (field) => setFieldSources(fs => ({ ...fs, [field]: "manual" }));
 
+  const pluginId = activePlugin?.pluginId || "manual";
+  const isManual = pluginId === "manual" || !activePlugin;
+
+  const getScannerButtonConfig = () => {
+    if (pluginId === "twain-ocr") return { label: "📷 NAČÍTAŤ DOKLAD (OCR) — F2", sub: "Vložte doklad do skenera, OCR rozpozná údaje automaticky" };
+    if (pluginId === "pcsc-nfc") return { label: "🆔 NAČÍTAŤ DOKLAD (Čip) — F2", sub: "Priložte OP alebo pas k čítačke čipov" };
+    if (pluginId === "camera-ocr") return { label: "📹 NAČÍTAŤ DOKLAD (Kamera) — F2", sub: "Ukážte doklad pred kameru notebooku" };
+    return { label: "NAČÍTAŤ DOKLAD", sub: "Vložte OP alebo cestovný pas do skenera — F2" };
+  };
+
   return (
     <div className="min-h-full flex flex-col">
     <div className="p-4 max-w-7xl mx-auto flex-1 pb-6">
       {nfcOpen && <NfcSimulator onDataReceived={handleNfcData} onClose={() => setNfcOpen(false)} />}
+      {showCanDialog && (
+        <CanDialog
+          onConfirm={(_can) => { setShowCanDialog(false); setShowScanLoader(true); }}
+          onCancel={() => setShowCanDialog(false)}
+        />
+      )}
+      {showScanLoader && activePlugin && (
+        <ScannerLoader
+          plugin={activePlugin}
+          onComplete={onScanComplete}
+          onCancel={() => setShowScanLoader(false)}
+        />
+      )}
 
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
@@ -293,24 +407,27 @@ export default function NovyZaznam() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT: NFC + osobné údaje */}
         <div className="lg:col-span-2 space-y-4">
-          {/* NFC button */}
-          <button
-            onClick={() => setNfcOpen(true)}
-            className="w-full bg-gov-blue hover:bg-gov-blue/90 text-white rounded-2xl p-5 flex items-center gap-4 shadow-lg transition-all hover:shadow-xl active:scale-[0.99]"
-          >
-            <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-8 h-8" />
+          {/* Scanner button — adaptive per plugin */}
+          {isManual ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3 text-slate-500 text-sm">
+              <span className="text-2xl">✍️</span>
+              <span>ℹ️ Aktívny režim: <strong>Manuálne zadávanie</strong> — vyplňte údaje ručne</span>
             </div>
-            <div className="text-left">
-              <div className="text-xl font-bold">NAČÍTAŤ DOKLAD</div>
-              <div className="text-sm text-blue-200">Vložte OP alebo cestovný pas do skenera — F2</div>
-            </div>
-            {source && (
-              <div className="ml-auto">
-                <SourceBadge source={source} />
+          ) : (
+            <button
+              onClick={handlePluginScan}
+              className="w-full bg-gov-blue hover:bg-gov-blue/90 text-white rounded-2xl p-5 flex items-center gap-4 shadow-lg transition-all hover:shadow-xl active:scale-[0.99]"
+            >
+              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0 text-3xl">
+                {activePlugin?.ikona || <CreditCard className="w-8 h-8" />}
               </div>
-            )}
-          </button>
+              <div className="text-left">
+                <div className="text-xl font-bold">{getScannerButtonConfig().label}</div>
+                <div className="text-sm text-blue-200">{getScannerButtonConfig().sub}</div>
+              </div>
+              {source && <div className="ml-auto"><SourceBadge source={source} /></div>}
+            </button>
+          )}
 
           {/* Osobné údaje */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">

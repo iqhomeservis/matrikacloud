@@ -1,0 +1,94 @@
+{
+  "name": "ScannerPlugin",
+  "type": "object",
+  "properties": {
+    "pluginId": {
+      "type": "string",
+      "title": "Plugin ID"
+    },
+    "nazov": {
+      "type": "string",
+      "title": "N\u00e1zov"
+    },
+    "vendor": {
+      "type": "string",
+      "title": "Vendor"
+    },
+    "verzia": {
+      "type": "string",
+      "title": "Verzia"
+    },
+    "popis": {
+      "type": "string",
+      "title": "Popis"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "MANUAL",
+        "UNIVERSAL_TWAIN_OCR",
+        "UNIVERSAL_PCSC_NFC",
+        "UNIVERSAL_CAMERA",
+        "UNIVERSAL_ZPL_PRINTER",
+        "SPECIALIZED"
+      ],
+      "title": "Kateg\u00f3ria"
+    },
+    "aktivny": {
+      "type": "boolean",
+      "title": "Akt\u00edvny",
+      "default": false
+    },
+    "capabilities": {
+      "type": "object",
+      "title": "Schopnosti",
+      "properties": {
+        "nfc": {
+          "type": "boolean"
+        },
+        "ocr": {
+          "type": "boolean"
+        },
+        "mrz": {
+          "type": "boolean"
+        },
+        "uv": {
+          "type": "boolean"
+        },
+        "camera": {
+          "type": "boolean"
+        },
+        "autoDetect": {
+          "type": "boolean"
+        }
+      }
+    },
+    "typ": {
+      "type": "string",
+      "enum": [
+        "BUILT_IN",
+        "MOCK",
+        "EXTERNAL"
+      ],
+      "title": "Typ"
+    },
+    "testovacieMockData": {
+      "type": "object",
+      "title": "Testovacie mock d\u00e1ta"
+    },
+    "ikona": {
+      "type": "string",
+      "title": "Ikona"
+    },
+    "vytvoreny": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Vytvoren\u00fd"
+    }
+  },
+  "required": [
+    "pluginId",
+    "nazov",
+    "category"
+  ]
+}

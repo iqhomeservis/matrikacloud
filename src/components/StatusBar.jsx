@@ -1,11 +1,22 @@
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff, Printer, CreditCard, Clock } from "lucide-react";
+import { Wifi, WifiOff, Printer, Clock } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 export default function StatusBar() {
   const [online, setOnline] = useState(navigator.onLine);
   const [bridgeStatus, setBridgeStatus] = useState({ nfc: "unknown", printer: "unknown" });
   const [time, setTime] = useState(new Date());
   const [todayCount, setTodayCount] = useState(0);
+  const [activePlugin, setActivePlugin] = useState(null);
+
+  useEffect(() => { loadPlugin(); }, []);
+  const loadPlugin = async () => {
+    try {
+      const plugins = await base44.entities.ScannerPlugin.filter({ aktivny: true }, "-vytvoreny", 10);
+      const scanner = plugins.find(p => p.category !== "UNIVERSAL_ZPL_PRINTER");
+      setActivePlugin(scanner || null);
+    } catch { setActivePlugin(null); }
+  };
 
   useEffect(() => {
     const handleOnline = () => setOnline(true);
@@ -46,14 +57,27 @@ export default function StatusBar() {
   const formatTime = (d) =>
     d.toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" });
 
+  const getScannerLabel = () => {
+    const pid = activePlugin?.pluginId;
+    if (!pid || pid === "manual") return null;
+    if (pid === "twain-ocr") return { icon: "📷", label: "Skener" };
+    if (pid === "pcsc-nfc") return { icon: "🆔", label: "Čítačka" };
+    if (pid === "camera-ocr") return { icon: "📹", label: "Kamera" };
+    return null;
+  };
+
+  const scannerLabel = getScannerLabel();
+
   return (
     <div className="flex items-center gap-4 text-xs text-blue-100">
-      {/* Skener */}
-      <div className="flex items-center gap-1.5" title="Skener dokladov">
-        <span className={`w-2 h-2 rounded-full ${dot(bridgeStatus.nfc)}`} />
-        <CreditCard className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Skener</span>
-      </div>
+      {/* Dynamický indikátor skenera */}
+      {scannerLabel && (
+        <div className="flex items-center gap-1.5" title="Skener dokladov">
+          <span className={`w-2 h-2 rounded-full ${dot(bridgeStatus.nfc)}`} />
+          <span>{scannerLabel.icon}</span>
+          <span className="hidden sm:inline">{scannerLabel.label}</span>
+        </div>
+      )}
 
       {/* Printer */}
       <div className="flex items-center gap-1.5" title="Tlačiareň">

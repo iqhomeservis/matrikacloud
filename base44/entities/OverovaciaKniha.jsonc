@@ -162,6 +162,27 @@
     "podpisCertifikatuPlatny": {
       "type": "boolean",
       "title": "Certifik\u00e1t platn\u00fd"
+    },
+    "skenovacieMetadata": {
+      "type": "object",
+      "title": "Skenovacie metad\u00e1ta",
+      "properties": {
+        "pluginId": {
+          "type": "string"
+        },
+        "pluginNazov": {
+          "type": "string"
+        },
+        "scanMethod": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "nfcVerified": {
+          "type": "boolean"
+        }
+      }
     }
   },
   "required": [

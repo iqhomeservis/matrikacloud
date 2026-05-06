@@ -69,6 +69,15 @@ export default function ZaznamDetail({ record: r, onClose, onReprint }) {
             {row("Predch. hash", r.predchadzajuciHash ? r.predchadzajuciHash.slice(0, 16) + "…" : "—")}
           </section>
 
+          {r.skenovacieMetadata && r.skenovacieMetadata.pluginId && (
+            <section>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">📡 Zdroj údajov</h3>
+              {row("Použitý skener", r.skenovacieMetadata.pluginNazov)}
+              {row("Metóda", r.skenovacieMetadata.scanMethod)}
+              {r.skenovacieMetadata.confidence != null && row("Spoľahlivosť", `${Math.round(r.skenovacieMetadata.confidence * 100)}%`)}
+              {r.skenovacieMetadata.nfcVerified && row("NFC overenie", "✓ Čip bol overený")}
+            </section>
+          )}
           {r.poznamka && (
             <section>
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Poznámka</h3>
