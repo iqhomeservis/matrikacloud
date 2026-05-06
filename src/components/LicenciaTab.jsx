@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const APP_VERSION = "1.0.0";
-const IS_DEV = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const IS_DEV = true; // TODO: vrátiť na: window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
 const FEATURES_MAP = [
   { key: "OVEROVANIE_LISTIN", label: "Overovanie listín" },
