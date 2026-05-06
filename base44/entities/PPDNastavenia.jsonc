@@ -1,0 +1,52 @@
+{
+  "name": "PPDNastavenia",
+  "type": "object",
+  "properties": {
+    "aktualnePoradoveCislo": {
+      "type": "integer",
+      "title": "Aktu\u00e1lne poradov\u00e9 \u010d\u00edslo",
+      "default": 1
+    },
+    "formatCisla": {
+      "type": "string",
+      "title": "Form\u00e1t \u010d\u00edsla dokladu",
+      "default": "PPD/{ROK}/{NNNNN}"
+    },
+    "rokAktualny": {
+      "type": "integer",
+      "title": "Aktu\u00e1lny rok"
+    },
+    "posledneVydaneCislo": {
+      "type": "string",
+      "title": "Posledn\u00e9 vydan\u00e9 \u010d\u00edslo"
+    },
+    "resetovatRocne": {
+      "type": "boolean",
+      "title": "Resetova\u0165 ro\u010dne",
+      "default": true
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "required": []
+}

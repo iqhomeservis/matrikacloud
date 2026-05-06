@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, Download, Printer, Eye, RefreshCw, Filter, FileText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PPDEvidencia from "../components/PPDEvidencia";
 import { createDoc, applyAllWatermarks } from "@/lib/pdfWatermark";
 import { toast } from "sonner";
 import ZaznamDetail from "../components/ZaznamDetail";
 
 export default function KnihaZaznamov() {
   const [records, setRecords] = useState([]);
+  const [ppdMap, setPpdMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterTyp, setFilterTyp] = useState("ALL");
@@ -22,7 +25,17 @@ export default function KnihaZaznamov() {
 
   useEffect(() => {
     load();
+    loadPPD();
   }, []);
+
+  const loadPPD = async () => {
+    const doklady = await base44.entities.PPDDoklad.list("-datumVydania", 1000);
+    const map = {};
+    for (const d of doklady) {
+      if (d.zaznamId && !d.jeStorno) map[d.zaznamId] = d;
+    }
+    setPpdMap(map);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -143,7 +156,18 @@ export default function KnihaZaznamov() {
   return (
     <div className="p-4 max-w-7xl mx-auto">
       {selected && <ZaznamDetail record={selected} onClose={() => setSelected(null)} onReprint={handleReprint} />}
+      <Tabs defaultValue="zaznam">
 
+      <TabsList className="mb-4">
+        <TabsTrigger value="zaznam">📋 Záznamy overení</TabsTrigger>
+        <TabsTrigger value="ppd">🧾 Doklady PPD</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="ppd">
+        <PPDEvidencia />
+      </TabsContent>
+
+      <TabsContent value="zaznam">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-gov-blue">Kniha záznamov</h1>
@@ -214,6 +238,7 @@ export default function KnihaZaznamov() {
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase">Typ</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase hidden lg:table-cell">Druh listiny</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase hidden lg:table-cell">Poplatok</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase hidden lg:table-cell">Doklad</th>
                 <th className="text-right px-4 py-3 font-semibold text-slate-600 text-xs uppercase">Akcie</th>
               </tr>
             </thead>
@@ -244,6 +269,14 @@ export default function KnihaZaznamov() {
                       `${r.poplatokEur?.toFixed(2) || "0.00"} €`
                     )}
                   </td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    {ppdMap[r.id] ? (
+                      <button
+                        className="font-mono text-xs text-gov-blue hover:underline"
+                        onClick={e => { e.stopPropagation(); import("../lib/ppdUtils").then(m => { const doc = m.generujPPDPdf(ppdMap[r.id]); window.open(doc.output("bloburl"), "_blank"); }); }}
+                      >{ppdMap[r.id].cisloDokladu}</button>
+                    ) : <span className="text-slate-300">—</span>}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelected(r)}>
@@ -269,7 +302,7 @@ export default function KnihaZaznamov() {
           </p>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-              ← Predošlá
+              ← Predóšlá
             </Button>
             <Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
               Nasledujúca →
@@ -277,6 +310,8 @@ export default function KnihaZaznamov() {
           </div>
         </div>
       )}
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

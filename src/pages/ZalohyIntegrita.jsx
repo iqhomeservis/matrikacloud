@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Archive, Download, CheckCircle, AlertCircle, RefreshCw, Shield, HardDrive, Cloud } from "lucide-react";
+import PPDUzavierka from "../components/PPDUzavierka";
 
 export default function ZalohyIntegrita() {
   const [zalohy, setZalohy] = useState([]);
@@ -205,6 +206,9 @@ export default function ZalohyIntegrita() {
           </div>
         </div>
       )}
+
+      {/* PPD Uzávierka */}
+      <PPDUzavierka />
 
       {/* Shamir info */}
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">

@@ -13,6 +13,7 @@ import SourceBadge from "../components/SourceBadge";
 import CanDialog from "../components/CanDialog";
 import ScannerLoader from "../components/ScannerLoader";
 import { generateHash, encryptField, formatPoradoveCislo, formatDateSK } from "../lib/matrikaUtils";
+import PPDModal from "../components/PPDModal";
 
 // Parse SK date format "DD.MM.YYYY" → "YYYY-MM-DD"
 function parseDateSK(str) {
@@ -101,6 +102,7 @@ export default function NovyZaznam() {
   const [lastScanMeta, setLastScanMeta] = useState(null);
   const [licStatus, setLicStatus] = useState(null);
   const [activeFunkcie, setActiveFunkcie] = useState([]);
+  const [ppdZaznam, setPpdZaznam] = useState(null);
 
   useEffect(() => { loadActivePlugin(); loadLicencia(); }, []);
 
@@ -294,6 +296,10 @@ export default function NovyZaznam() {
     toast.success(`Záznam ${saved.poradoveCislo} uložený`);
     setForm(INITIAL_FORM);
     setSource(null);
+    // Show PPD modal if fee > 0
+    if (!record.oslobodenyOdPoplatku && (record.poplatokEur || 0) > 0) {
+      setPpdZaznam(saved);
+    }
   };
 
   const isRestricted = licStatus === "RESTRICTED" || licStatus === "REVOKED";
@@ -336,6 +342,9 @@ export default function NovyZaznam() {
     setPrinting(false);
     setForm(INITIAL_FORM);
     setSource(null);
+    if (!record.oslobodenyOdPoplatku && (record.poplatokEur || 0) > 0) {
+      setPpdZaznam(saved);
+    }
   };
 
   const handleReset = () => {
@@ -379,6 +388,7 @@ export default function NovyZaznam() {
 
   return (
     <div className="min-h-full flex flex-col">
+    {ppdZaznam && <PPDModal zaznam={ppdZaznam} onClose={() => setPpdZaznam(null)} />}
     <div className="p-4 max-w-7xl mx-auto flex-1 pb-6">
       {nfcOpen && <NfcSimulator onDataReceived={handleNfcData} onClose={() => setNfcOpen(false)} />}
       {showCanDialog && (

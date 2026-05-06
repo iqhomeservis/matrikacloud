@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Save, Wifi, Printer, CreditCard, TestTube } from "lucide-react";
 import ScannerPluginManager from "@/components/ScannerPluginManager";
+import { nacitajAleboVytvorPPDNastavenia, formatujCisloPPD } from "@/lib/ppdUtils";
 import LicenciaTab from "@/components/LicenciaTab";
 
 const DEFAULT_DOLOZKA_LISTINA = `Podľa § 7 zákona NR SR č. 599/2001 Z. z. osvedčujem, že táto odpis (kópia) súhlasí s predloženou listinou.
@@ -44,11 +45,30 @@ export default function Nastavenia() {
   });
   const [id, setId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [ppdNas, setPpdNas] = useState(null);
+  const [ppdSaving, setPpdSaving] = useState(false);
   const [bridgeTest, setBridgeTest] = useState({ nfc: null, printer: null });
   const [testing, setTesting] = useState(false);
   const [activeTab, setActiveTab] = useState("licencia");
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadPPD(); }, []);
+
+  const loadPPD = async () => {
+    const n = await nacitajAleboVytvorPPDNastavenia();
+    setPpdNas(n);
+  };
+
+  const savePPD = async () => {
+    if (!ppdNas) return;
+    setPpdSaving(true);
+    await base44.entities.PPDNastavenia.update(ppdNas.id, {
+      aktualnePoradoveCislo: ppdNas.aktualnePoradoveCislo,
+      formatCisla: ppdNas.formatCisla,
+    });
+    await loadPPD();
+    setPpdSaving(false);
+    toast.success("Číslovanie PPD uložené");
+  };
 
   const load = async () => {
     const data = await base44.entities.Nastavenia.list();
@@ -243,6 +263,55 @@ export default function Nastavenia() {
                 <div><span className="text-blue-600 font-bold">POST</span> /api/printer/print — tlač ZPL II štítkov</div>
               </div>
             </div>
+          </div>
+
+          {/* Pokladničné doklady */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            {section("Pokladničné doklady (PPD)", "🧾")}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+              <p className="text-xs text-amber-800">
+                <strong>Upozornenie:</strong> Číslovanie príjmových dokladov musí byť nepretržité.
+                Ak ste vydávali doklady v papierovej forme (napr. PPD/2026/00001 až PPD/2026/00022),
+                nastavte aktuálne číslo na <strong>23</strong> aby systém pokračoval od PPD/2026/00023.
+              </p>
+            </div>
+            {ppdNas && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs font-semibold text-slate-600 mb-1 block">Formát čísla dokladu</Label>
+                  <Input
+                    value={ppdNas.formatCisla || "PPD/{ROK}/{NNNNN}"}
+                    onChange={e => setPpdNas(n => ({ ...n, formatCisla: e.target.value }))}
+                    className="h-10 font-mono"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Premenné: {'{ROK}'}, {'{MES}'}, {'{NNNNN}'}, {'{NNN}'}</p>
+                  <p className="text-xs text-slate-400">Príklad: {formatujCisloPPD(ppdNas.formatCisla, ppdNas.aktualnePoradoveCislo, new Date().getFullYear(), new Date().getMonth() + 1)}</p>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-slate-600 mb-1 block">Aktuálne poradové číslo</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={ppdNas.aktualnePoradoveCislo || 1}
+                    onChange={e => setPpdNas(n => ({ ...n, aktualnePoradoveCislo: parseInt(e.target.value) }))}
+                    className="h-10 font-mono w-40"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    Upravte ak ste vydávali doklady v papierovej forme. Ďalší doklad dostane číslo{" "}
+                    <strong className="text-slate-600">#{(ppdNas.aktualnePoradoveCislo || 1) + 1}</strong>.
+                  </p>
+                </div>
+                {ppdNas.posledneVydaneCislo && (
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-xs text-slate-500">Posledný vydaný doklad:</p>
+                    <p className="font-mono font-bold text-gov-blue">{ppdNas.posledneVydaneCislo}</p>
+                  </div>
+                )}
+                <Button onClick={savePPD} disabled={ppdSaving} variant="outline" className="gap-2">
+                  <Save className="w-4 h-4" /> {ppdSaving ? "Ukladám…" : "Uložiť číslovanie"}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* O aplikácii */}

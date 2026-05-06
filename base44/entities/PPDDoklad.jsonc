@@ -1,0 +1,95 @@
+{
+  "name": "PPDDoklad",
+  "type": "object",
+  "properties": {
+    "cisloDokladu": {
+      "type": "string",
+      "title": "\u010c\u00edslo dokladu"
+    },
+    "zaznamId": {
+      "type": "string",
+      "title": "ID z\u00e1znamu (OverovaciaKniha)"
+    },
+    "datumVydania": {
+      "type": "string",
+      "format": "date-time",
+      "title": "D\u00e1tum vydania"
+    },
+    "suma": {
+      "type": "number",
+      "title": "Suma (EUR)"
+    },
+    "slovom": {
+      "type": "string",
+      "title": "Suma slovom"
+    },
+    "typSluzby": {
+      "type": "string",
+      "title": "Typ slu\u017eby"
+    },
+    "overovatelMeno": {
+      "type": "string",
+      "title": "Overovate\u013e"
+    },
+    "obecNazov": {
+      "type": "string",
+      "title": "Obec"
+    },
+    "obecIco": {
+      "type": "string",
+      "title": "I\u010cO obce"
+    },
+    "obecAdresa": {
+      "type": "string",
+      "title": "Adresa obce"
+    },
+    "ziadatelMeno": {
+      "type": "string",
+      "title": "\u017diadate\u013e"
+    },
+    "poradoveCisloZaznamu": {
+      "type": "string",
+      "title": "Poradov\u00e9 \u010d\u00edslo z\u00e1znamu"
+    },
+    "oslobodenyOdPoplatku": {
+      "type": "boolean",
+      "title": "Osloboden\u00fd od poplatku"
+    },
+    "dovodOslobodenia": {
+      "type": "string",
+      "title": "D\u00f4vod oslobodenia"
+    },
+    "pravnyZaklad": {
+      "type": "string",
+      "title": "Pr\u00e1vny z\u00e1klad"
+    },
+    "stav": {
+      "type": "string",
+      "enum": [
+        "VYDANY",
+        "STORNOVANY"
+      ],
+      "title": "Stav",
+      "default": "VYDANY"
+    },
+    "stornoDoklad": {
+      "type": "string",
+      "title": "\u010c\u00edslo stornovacieho dokladu"
+    },
+    "stornoDovodText": {
+      "type": "string",
+      "title": "D\u00f4vod storna"
+    },
+    "jeStorno": {
+      "type": "boolean",
+      "title": "Je stornovac\u00ed doklad",
+      "default": false
+    }
+  },
+  "required": [
+    "cisloDokladu",
+    "datumVydania",
+    "suma",
+    "stav"
+  ]
+}
