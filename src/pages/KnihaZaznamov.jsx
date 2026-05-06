@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Download, Printer, Eye, RefreshCw, Filter } from "lucide-react";
+import { Search, Download, Printer, Eye, RefreshCw, Filter, FileText } from "lucide-react";
+import { createDoc, applyAllWatermarks } from "@/lib/pdfWatermark";
 import { toast } from "sonner";
 import ZaznamDetail from "../components/ZaznamDetail";
 
@@ -46,6 +47,62 @@ export default function KnihaZaznamov() {
   const formatDate = (iso) => {
     if (!iso) return "—";
     return new Date(iso).toLocaleDateString("sk-SK");
+  };
+
+  const handleExportPDF = async () => {
+    const doc = createDoc("landscape", "a4");
+    doc.setFontSize(16);
+    doc.setTextColor(30, 58, 110);
+    doc.text("Kniha overovacích záznamov", 14, 18);
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Export: ${new Date().toLocaleString("sk-SK")} | Záznamov: ${filtered.length}`, 14, 25);
+
+    const headers = [["Por. č.", "Dátum", "Meno", "Priezvisko", "Typ", "Druh listiny", "Listy", "Poplatok", "Overovateľ"]];
+    const rows = filtered.map(r => [
+      r.poradoveCislo || "",
+      formatDate(r.datumOverenia),
+      r.ziadatelMeno || "",
+      r.ziadatelPriezvisko || "",
+      r.typOverenia || "",
+      r.listinaDruh || "",
+      r.pocetListov || "",
+      r.oslobodenyOdPoplatku ? "Osl." : `${r.poplatokEur?.toFixed(2) || "0.00"} €`,
+      r.overovatelMeno || "",
+    ]);
+
+    // Simple manual table rendering
+    const colWidths = [28, 22, 28, 28, 20, 42, 12, 22, 40];
+    const startX = 14;
+    let y = 32;
+    const rowH = 7;
+
+    // Header row
+    doc.setFillColor(30, 58, 110);
+    doc.rect(startX, y, colWidths.reduce((a,b)=>a+b,0), rowH, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(7);
+    let x = startX;
+    headers[0].forEach((h, i) => { doc.text(h, x + 1, y + 4.5); x += colWidths[i]; });
+    y += rowH;
+
+    doc.setTextColor(30, 30, 30);
+    rows.forEach((row, ri) => {
+      if (y > 185) { doc.addPage(); y = 14; }
+      if (ri % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(startX, y, colWidths.reduce((a,b)=>a+b,0), rowH, "F"); }
+      x = startX;
+      row.forEach((cell, i) => {
+        const cellStr = String(cell);
+        doc.setFontSize(6.5);
+        doc.text(doc.splitTextToSize(cellStr, colWidths[i] - 2)[0], x + 1, y + 4.5);
+        x += colWidths[i];
+      });
+      y += rowH;
+    });
+
+    await applyAllWatermarks(doc);
+    doc.save(`kniha_overovani_${new Date().toISOString().slice(0,10)}.pdf`);
+    toast.success("PDF exportovaný");
   };
 
   const handleExportCSV = () => {
@@ -98,6 +155,9 @@ export default function KnihaZaznamov() {
           </Button>
           <Button onClick={handleExportCSV} variant="outline" size="sm" className="gap-2">
             <Download className="w-4 h-4" /> Export CSV
+          </Button>
+          <Button onClick={handleExportPDF} variant="outline" size="sm" className="gap-2">
+            <FileText className="w-4 h-4" /> Export PDF
           </Button>
         </div>
       </div>
