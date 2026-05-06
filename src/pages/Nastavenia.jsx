@@ -244,6 +244,36 @@ export default function Nastavenia() {
               </div>
             </div>
           </div>
+
+          {/* O aplikácii */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            {section("O aplikácii", "ℹ️")}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+              {[
+                ["Názov", "MatrikaCloud — Asistent overovania"],
+                ["Verzia", "1.0.0-MVP"],
+                ["Zákon", "Zákon č. 599/2001 Z. z."],
+                ["Email podpory", <a href="mailto:support@matrikacloud.sk" className="text-blue-600 hover:underline">support@matrikacloud.sk</a>],
+                ["Web", <a href="https://matrikacloud.sk" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">matrikacloud.sk</a>],
+                ["Copyright", "© 2026 MatrikaCloud. Všetky práva vyhradené."],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-start gap-2 py-2 border-b border-slate-50">
+                  <span className="text-slate-500 w-36 flex-shrink-0">{label}</span>
+                  <span className="font-medium text-slate-800">{value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.success("Máte najnovšiu verziu 1.0.0")}
+                className="gap-2"
+              >
+                📥 Skontrolovať aktualizácie
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="skener" className="mt-4">
