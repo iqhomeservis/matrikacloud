@@ -23,6 +23,35 @@ function parseDateSK(str) {
   return str;
 }
 
+// ─── RC → Dátum narodenia ───────────────────────────────────────────────────
+function rcToDatumNarodenia(rc) {
+  const digits = rc.replace(/\//g, "");
+  if (digits.length < 6) return null;
+  const yy = parseInt(digits.slice(0, 2), 10);
+  let mm = parseInt(digits.slice(2, 4), 10);
+  const dd = parseInt(digits.slice(4, 6), 10);
+  if (isNaN(yy) || isNaN(mm) || isNaN(dd)) return null;
+  if (mm > 50) mm -= 50;       // žena
+  else if (mm > 20) mm -= 20; // náhradné RČ
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+  const rok = yy <= 24 ? 2000 + yy : 1900 + yy;
+  return `${rok}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+}
+
+// ─── PSČ lookup ──────────────────────────────────────────────────────────────
+const PSC_MESTA = {
+  "08001": "Prešov", "04001": "Košice", "81101": "Bratislava - Staré Mesto",
+  "83101": "Bratislava - Vajnory", "85101": "Bratislava - Petržalka",
+  "01001": "Žilina", "97401": "Banská Bystrica", "91101": "Trenčín",
+  "91701": "Trnava", "04901": "Rožňava", "06601": "Humenné",
+  "08501": "Bardejov", "06001": "Kežmarok", "05801": "Poprad",
+  "03201": "Liptovský Mikuláš", "03401": "Ružomberok", "02201": "Čadca",
+  "07101": "Michalovce", "07201": "Trebišov", "09101": "Stropkov",
+  "09201": "Snina", "08601": "Vranov nad Topľou", "05401": "Levoča",
+  "05201": "Spišská Nová Ves", "05501": "Gelnica", "08201": "Sabinov",
+  "08301": "Lipany", "08101": "Prešov",
+};
+
 // FieldWrap must be outside component to avoid remount on every render
 function FieldWrap({ fieldSource, value, isError, children, extraRight }) {
   const getStyle = () => {
@@ -103,6 +132,9 @@ export default function NovyZaznam() {
   const [licStatus, setLicStatus] = useState(null);
   const [activeFunkcie, setActiveFunkcie] = useState([]);
   const [ppdZaznam, setPpdZaznam] = useState(null);
+  const [dateAutoFilled, setDateAutoFilled] = useState(false);
+  const [pscError, setPscError] = useState(false);
+  const [cityAutoFilled, setCityAutoFilled] = useState(false);
 
   useEffect(() => { loadActivePlugin(); loadLicencia(); }, []);
 
@@ -372,6 +404,36 @@ export default function NovyZaznam() {
     setRcRaw(val);
     set("rodneCislo", val);
     if (val) setFieldErrors(fe => ({ ...fe, rodneCislo: false }));
+    // Auto-fill birthdate
+    if (digitsOnly.length >= 6) {
+      const computed = rcToDatumNarodenia(val);
+      if (computed) {
+        setForm(f => ({ ...f, rodneCislo: val, datumNarodenia: computed }));
+        setDateAutoFilled(true);
+        return;
+      }
+    }
+    setDateAutoFilled(false);
+  };
+
+  const handlePscChange = (e) => {
+    const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 5);
+    const formatted = digits.length > 3 ? digits.slice(0, 3) + " " + digits.slice(3) : digits;
+    set("adresaPsc", formatted);
+    markManual("adresaPsc");
+    const isValid = digits.length === 5;
+    setPscError(digits.length > 0 && !isValid);
+    if (isValid) {
+      const city = PSC_MESTA[digits] || "";
+      if (city) {
+        setForm(f => ({ ...f, adresaPsc: formatted, adresaMesto: city }));
+        setCityAutoFilled(true);
+      } else {
+        setCityAutoFilled(false);
+      }
+    } else {
+      setCityAutoFilled(false);
+    }
   };
 
   const markManual = (field) => setFieldSources(fs => ({ ...fs, [field]: "manual" }));
@@ -519,8 +581,9 @@ export default function NovyZaznam() {
                   <Input
                     type="date"
                     value={form.datumNarodenia}
-                    onChange={e => { set("datumNarodenia", e.target.value); markManual("datumNarodenia"); }}
+                    onChange={e => { set("datumNarodenia", e.target.value); markManual("datumNarodenia"); setDateAutoFilled(false); }}
                     className="h-10 pr-7"
+                    style={dateAutoFilled ? { borderColor: "#3b82f6", borderWidth: "2px" } : {}}
                   />
                 </FieldWrap>
               </div>
@@ -545,13 +608,25 @@ export default function NovyZaznam() {
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Mesto</Label>
                   <FieldWrap fieldSource={fieldSources["adresaMesto"]} value={form.adresaMesto}>
-                    <Input value={form.adresaMesto} onChange={e => { set("adresaMesto", e.target.value); markManual("adresaMesto"); }} className="h-10 pr-7" placeholder="Prešov" />
+                    <Input
+                      value={form.adresaMesto}
+                      onChange={e => { set("adresaMesto", e.target.value); markManual("adresaMesto"); setCityAutoFilled(false); }}
+                      className="h-10 pr-7"
+                      placeholder="Prešov"
+                      style={cityAutoFilled ? { borderColor: "#3b82f6", borderWidth: "2px" } : {}}
+                    />
                   </FieldWrap>
                 </div>
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">PSČ</Label>
                   <FieldWrap fieldSource={fieldSources["adresaPsc"]} value={form.adresaPsc}>
-                    <Input value={form.adresaPsc} onChange={e => { set("adresaPsc", e.target.value); markManual("adresaPsc"); }} className="h-10 pr-7" placeholder="08001" />
+                    <Input
+                      value={form.adresaPsc}
+                      onChange={handlePscChange}
+                      className={`h-10 pr-7 ${pscError ? "border-red-400 border-2" : ""}`}
+                      placeholder="080 01"
+                      maxLength={6}
+                    />
                   </FieldWrap>
                 </div>
                 <div>
