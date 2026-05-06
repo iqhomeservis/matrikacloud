@@ -3,8 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { generujPPDPdf } from "@/lib/ppdUtils";
 import { RefreshCw, Eye, Printer, X, Pencil, Check, XCircle } from "lucide-react";
+import PPDPrintView from "./PPDPrintView";
 
 export default function PPDEvidencia() {
   const [doklady, setDoklady] = useState([]);
@@ -17,6 +17,18 @@ export default function PPDEvidencia() {
   const [editReason, setEditReason] = useState("");
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [printDoklad, setPrintDoklad] = useState(null);
+  const [nastavenia, setNastavenia] = useState(null);
+
+  const openPrint = async (d) => {
+    if (!nastavenia) {
+      const settings = await base44.entities.Nastavenia.list();
+      setNastavenia(settings[0] || {});
+      setPrintDoklad(d);
+    } else {
+      setPrintDoklad(d);
+    }
+  };
 
   useEffect(() => { load(); }, []);
 
@@ -27,11 +39,7 @@ export default function PPDEvidencia() {
     setLoading(false);
   };
 
-  const openPdf = (doklad) => {
-    const doc = generujPPDPdf(doklad);
-    const blob = doc.output("blob");
-    window.open(URL.createObjectURL(blob), "_blank");
-  };
+  // Legacy openPdf kept for storno copy
 
   const handleStorno = async () => {
     if (!stornoDovod.trim()) { toast.error("Dôvod storna je povinný"); return; }
@@ -101,6 +109,8 @@ export default function PPDEvidencia() {
 
   return (
     <div className="space-y-4">
+      {printDoklad && <PPDPrintView doklad={printDoklad} nastavenia={nastavenia} onClose={() => setPrintDoklad(null)} />}
+
       {/* Storno modal */}
       {stornoId && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[300] p-4">
@@ -192,10 +202,10 @@ export default function PPDEvidencia() {
                   <td className="px-4 py-2.5">{stavBadge(d.stav)}</td>
                   <td className="px-4 py-2.5">
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Zobraziť PDF" onClick={() => openPdf(d)}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Zobraziť a tlačiť" onClick={() => openPrint(d)}>
                         <Eye className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Tlačiť znova" onClick={() => { const doc = generujPPDPdf(d); doc.autoPrint(); window.open(doc.output("bloburl"), "_blank"); }}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Tlačiť znova" onClick={() => openPrint(d)}>
                         <Printer className="w-3.5 h-3.5" />
                       </Button>
                       {d.stav === "VYDANY" && !d.jeStorno && (

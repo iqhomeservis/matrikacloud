@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { generujPPDPdf, sumaSlowom, formatujCisloPPD, nacitajAleboVytvorPPDNastavenia } from "@/lib/ppdUtils";
+import { sumaSlowom, formatujCisloPPD, nacitajAleboVytvorPPDNastavenia } from "@/lib/ppdUtils";
+import PPDPrintView from "./PPDPrintView";
 
 export default function PPDModal({ zaznam, onClose }) {
   const [vydatDoklad, setVydatDoklad] = useState(true);
   const [oslobodeny, setOslobodeny] = useState(zaznam?.oslobodenyOdPoplatku || false);
   const [loading, setLoading] = useState(false);
+  const [printDoklad, setPrintDoklad] = useState(null);
+  const [nastavenia, setNastavenia] = useState(null);
 
   const suma = oslobodeny ? 0 : (zaznam?.poplatokEur || 0);
   const slovom = sumaSlowom(suma);
@@ -56,11 +59,11 @@ export default function PPDModal({ zaznam, onClose }) {
       });
 
       if (printAfter) {
-        const doc = generujPPDPdf(dokladData);
-        doc.autoPrint();
-        const blob = doc.output("blob");
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
+        setNastavenia(cfg);
+        setPrintDoklad(dokladData);
+        toast.success(`Doklad ${cisloDokladu} vydaný`);
+        // onClose called when user closes print view
+        return;
       }
 
       toast.success(`Doklad ${cisloDokladu} vydaný`);
@@ -73,6 +76,10 @@ export default function PPDModal({ zaznam, onClose }) {
 
   const handleSaveWithoutPrint = () => buildAndSavePPD(false);
   const handlePrint = () => buildAndSavePPD(true);
+
+  if (printDoklad) {
+    return <PPDPrintView doklad={printDoklad} nastavenia={nastavenia} onClose={onClose} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
