@@ -3,8 +3,10 @@ import { BookOpen, PlusCircle, Settings, Shield, Archive, Menu, X } from "lucide
 import { useState, useEffect } from "react";
 import StatusBar from "./StatusBar";
 import LicenciaBanner from "./LicenciaBanner";
+import TamperError from "./TamperError";
 import { performHeartbeat, shouldRunHeartbeat, checkOfflineStatus } from "@/lib/heartbeat";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 const navItems = [
   { path: "/", label: "Nový záznam", icon: PlusCircle },
@@ -18,21 +20,72 @@ export default function Layout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [licStatus, setLicStatus] = useState(null);
+  const [tamperCode, setTamperCode] = useState(null);
 
   useEffect(() => {
     checkOfflineStatus();
     shouldRunHeartbeat().then(should => { if (should) performHeartbeat(); });
+
+    const runAntiTamper = async () => {
+      try {
+        const [licList, nastavList] = await Promise.all([
+          base44.entities.Licencia.list("-created_date", 1),
+          base44.entities.Nastavenia.list("-created_date", 1),
+        ]);
+        const lic = licList[0];
+        const nas = nastavList[0];
+
+        if (!lic || lic.status === "NOT_ACTIVATED") return;
+
+        // Kontrola 1 — IČO konzistencia
+        if (lic.obecIco && nas?.obecIco && lic.obecIco !== nas.obecIco) {
+          await base44.entities.HeartbeatLog.create({
+            cas: new Date().toISOString(),
+            typ: "ERROR",
+            vysledok: "FAILED",
+            chybaText: "ICO_MISMATCH",
+          });
+          setTamperCode("ICO_MISMATCH");
+          return;
+        }
+
+        // Kontrola 2 — Časový skok
+        if (lic.posledneOverenie) {
+          const lastHb = new Date(lic.posledneOverenie).getTime();
+          if (Date.now() < lastHb - 60000) { // tolerancia 1 min
+            await base44.entities.HeartbeatLog.create({
+              cas: new Date().toISOString(),
+              typ: "ERROR",
+              vysledok: "FAILED",
+              chybaText: "TIME_TAMPERING",
+            });
+            const attempts = (lic.tamperingAttempts || 0) + 1;
+            const patch = { tamperingAttempts: attempts };
+            if (attempts >= 3) patch.status = "RESTRICTED";
+            await base44.entities.Licencia.update(lic.id, patch);
+            toast.error("Detekovaná zmena systémového času. Aplikácia to zaznamenala.");
+            window.dispatchEvent(new CustomEvent("licencia-updated"));
+          }
+        }
+
+        setLicStatus(lic.status);
+      } catch {}
+    };
+
+    runAntiTamper();
+
     const loadLic = () => {
       base44.entities.Licencia.list("-created_date", 1)
         .then(list => { if (list[0]) setLicStatus(list[0].status); })
         .catch(() => {});
     };
-    loadLic();
     window.addEventListener("licencia-updated", loadLic);
     return () => window.removeEventListener("licencia-updated", loadLic);
   }, []);
 
   const isRestricted = licStatus === "RESTRICTED" || licStatus === "REVOKED";
+
+  if (tamperCode) return <TamperError code={tamperCode} onReset={() => setTamperCode(null)} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
