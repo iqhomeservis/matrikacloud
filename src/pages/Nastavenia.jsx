@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Save, Wifi, Printer, CreditCard, TestTube } from "lucide-react";
 import ScannerPluginManager from "@/components/ScannerPluginManager";
+import LicenciaTab from "@/components/LicenciaTab";
 
 const DEFAULT_DOLOZKA_LISTINA = `Podľa § 7 zákona NR SR č. 599/2001 Z. z. osvedčujem, že táto odpis (kópia) súhlasí s predloženou listinou.
 Listina obsahuje {pocetListov} listov a {pocetStran} strán.
@@ -45,7 +46,7 @@ export default function Nastavenia() {
   const [saving, setSaving] = useState(false);
   const [bridgeTest, setBridgeTest] = useState({ nfc: null, printer: null });
   const [testing, setTesting] = useState(false);
-  const [activeTab, setActiveTab] = useState("obecne");
+  const [activeTab, setActiveTab] = useState("licencia");
 
   useEffect(() => { load(); }, []);
 
@@ -107,9 +108,14 @@ export default function Nastavenia() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-2">
+          <TabsTrigger value="licencia">🪪 O licencii</TabsTrigger>
           <TabsTrigger value="obecne">🏛️ Obecné nastavenia</TabsTrigger>
           <TabsTrigger value="skener">🖥️ Skener dokladov</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="licencia" className="mt-4">
+          <LicenciaTab />
+        </TabsContent>
 
         <TabsContent value="obecne" className="space-y-6 mt-4">
           {/* Obec */}

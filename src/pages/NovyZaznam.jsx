@@ -99,8 +99,17 @@ export default function NovyZaznam() {
   const [showCanDialog, setShowCanDialog] = useState(false);
   const [showScanLoader, setShowScanLoader] = useState(false);
   const [lastScanMeta, setLastScanMeta] = useState(null);
+  const [licStatus, setLicStatus] = useState(null);
+  const [activeFunkcie, setActiveFunkcie] = useState([]);
 
-  useEffect(() => { loadActivePlugin(); }, []);
+  useEffect(() => { loadActivePlugin(); loadLicencia(); }, []);
+
+  const loadLicencia = async () => {
+    try {
+      const list = await base44.entities.Licencia.list("-created_date", 1);
+      if (list[0]) { setLicStatus(list[0].status); setActiveFunkcie(list[0].aktivneFunkcie || []); }
+    } catch {}
+  };
 
   const loadActivePlugin = async () => {
     try {
@@ -265,6 +274,7 @@ export default function NovyZaznam() {
   };
 
   const handleSaveOnly = async () => {
+    if (isRestricted) { toast.error("Nový záznam nie je možný v obmedzenom režime"); return; }
     if (!validateRequired()) return;
     setSaving(true);
     const record = await buildRecord();
@@ -286,7 +296,12 @@ export default function NovyZaznam() {
     setSource(null);
   };
 
+  const isRestricted = licStatus === "RESTRICTED" || licStatus === "REVOKED";
+  const canPrint = activeFunkcie.includes("TLAC_STITKOV");
+
   const handlePrintAndSave = async () => {
+    if (isRestricted) { toast.error("Nový záznam nie je možný v obmedzenom režime"); return; }
+    if (!canPrint) { toast.error("Tlač štítkov nie je dostupná v skúšobnej verzii."); return; }
     if (!validateRequired()) return;
     setPrinting(true);
     const record = await buildRecord();
@@ -714,7 +729,8 @@ export default function NovyZaznam() {
         </button>
         <button
           onClick={handlePrintAndSave}
-          disabled={printing || saving}
+          disabled={printing || saving || isRestricted || !canPrint}
+          title={isRestricted ? "Zablokované — obmedzený režim" : !canPrint ? "Tlač štítkov nie je dostupná v skúšobnej verzii" : undefined}
           className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-8 py-3 text-base font-bold transition disabled:opacity-50 flex items-center gap-2 shadow-lg"
         >
           <Printer className="w-5 h-5" /> 🖨️ TLAČIŤ ŠTÍTKY (F4)

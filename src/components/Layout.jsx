@@ -1,7 +1,10 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { BookOpen, PlusCircle, Settings, Shield, Archive, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StatusBar from "./StatusBar";
+import LicenciaBanner from "./LicenciaBanner";
+import { performHeartbeat, shouldRunHeartbeat, checkOfflineStatus } from "@/lib/heartbeat";
+import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { path: "/", label: "Nový záznam", icon: PlusCircle },
@@ -14,6 +17,22 @@ const navItems = [
 export default function Layout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [licStatus, setLicStatus] = useState(null);
+
+  useEffect(() => {
+    checkOfflineStatus();
+    shouldRunHeartbeat().then(should => { if (should) performHeartbeat(); });
+    const loadLic = () => {
+      base44.entities.Licencia.list("-created_date", 1)
+        .then(list => { if (list[0]) setLicStatus(list[0].status); })
+        .catch(() => {});
+    };
+    loadLic();
+    window.addEventListener("licencia-updated", loadLic);
+    return () => window.removeEventListener("licencia-updated", loadLic);
+  }, []);
+
+  const isRestricted = licStatus === "RESTRICTED" || licStatus === "REVOKED";
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -53,6 +72,19 @@ export default function Layout() {
           <div className="p-2 space-y-0.5 mt-2">
             {navItems.map(({ path, label, icon: Icon }) => {
               const active = location.pathname === path;
+              const blocked = isRestricted && path === "/";
+              if (blocked) {
+                return (
+                  <div
+                    key={path}
+                    title="Nový záznam nie je dostupný v obmedzenom režime"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-500 opacity-50 cursor-not-allowed select-none"
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    {label}
+                  </div>
+                );
+              }
               return (
                 <Link
                   key={path}
@@ -84,6 +116,7 @@ export default function Layout() {
 
         {/* Main content */}
         <main className="flex-1 overflow-auto">
+          <LicenciaBanner />
           <Outlet />
         </main>
       </div>
