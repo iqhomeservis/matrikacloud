@@ -101,9 +101,15 @@ export default function PPDPrintView({ doklad, nastavenia, onClose }) {
         >
           {/* HLAVIČKA */}
           <div style={{ textAlign: "center", marginBottom: "6mm" }}>
+            {(nastavenia?.logoObce) && (
+              <img src={nastavenia.logoObce} alt="Logo" style={{ maxHeight: 60, maxWidth: 120, objectFit: 'contain', marginBottom: 6, display: 'inline-block' }} />
+            )}
             <div style={{ fontSize: "18pt", fontWeight: "bold", letterSpacing: "0.5px" }}>
               {obecNazov || "OBEC"}
             </div>
+            {nastavenia?.sloganObce && (
+              <div style={{ fontSize: "9pt", color: "#555", marginTop: "1px" }}>{nastavenia.sloganObce}</div>
+            )}
             {obecAdresa && (
               <div style={{ fontSize: "9pt", color: "#444", marginTop: "2px" }}>{obecAdresa}</div>
             )}

@@ -80,6 +80,36 @@ export default function Nastavenia() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!['image/png','image/jpeg','image/svg+xml'].includes(file.type)) {
+      toast.error('Akceptované formáty: PNG, JPG, SVG'); return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Logo musí byť menšie ako 2 MB'); return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 300;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        set('logoObce', canvas.toDataURL('image/png'));
+        toast.success('Logo nahrатé — kliknite Uložiť nastavenia');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     if (id) {
@@ -138,6 +168,41 @@ export default function Nastavenia() {
         </TabsContent>
 
         <TabsContent value="obecne" className="space-y-6 mt-4">
+
+          {/* Identita obce */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            {section("Identita obce", "🖼️")}
+            <div className="flex items-start gap-6 flex-wrap">
+              <div className="flex flex-col items-center gap-2">
+                {form.logoObce ? (
+                  <img src={form.logoObce} alt="Logo obce" style={{ maxHeight: 120, maxWidth: 200, objectFit: 'contain' }} className="rounded border border-slate-200 p-2 bg-slate-50" />
+                ) : (
+                  <div className="w-40 h-28 bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-400 text-xs gap-1">
+                    <span className="text-3xl">🏛️</span>
+                    <span>Bez loga</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <label className="cursor-pointer">
+                    <input type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-300 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">📁 Nahrať logo</span>
+                  </label>
+                  {form.logoObce && (
+                    <button onClick={() => set('logoObce', '')} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-red-200 bg-red-50 text-xs font-medium text-red-600 hover:bg-red-100">❌ Odstrániť</button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 text-center">PNG, JPG, SVG · max 2 MB</p>
+              </div>
+              <div className="flex-1 min-w-48 space-y-3">
+                <div>
+                  <Label className="text-xs font-semibold text-slate-600 mb-1 block">Slogan / podnadpis (voliteľné)</Label>
+                  <Input value={form.sloganObce || ''} onChange={e => set('sloganObce', e.target.value)} placeholder="Obecný úrad" className="h-10" />
+                  <p className="text-xs text-slate-400 mt-1">Zobrazí sa pod názvom obce v dokumentoch</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Obec */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             {section("Údaje obce a overovateľa", "🏛️")}

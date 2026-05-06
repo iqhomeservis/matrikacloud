@@ -23,11 +23,16 @@ export default function Layout() {
   const [licStatus, setLicStatus] = useState(null);
   const [tamperCode, setTamperCode] = useState(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [obecLogo, setObecLogo] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     checkOfflineStatus();
     shouldRunHeartbeat().then(should => { if (should) performHeartbeat(); });
+    base44.entities.Nastavenia.list("-created_date", 1).then(list => { if (list[0]?.logoObce) setObecLogo(list[0].logoObce); }).catch(() => {});
+    window.addEventListener("nastavenia-updated", () => {
+      base44.entities.Nastavenia.list("-created_date", 1).then(list => { setObecLogo(list[0]?.logoObce || ""); }).catch(() => {});
+    });
 
     const runAntiTamper = async () => {
       try {
@@ -115,9 +120,13 @@ export default function Layout() {
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gov-gold rounded flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-gov-blue" />
-              </div>
+              {obecLogo ? (
+                <img src={obecLogo} alt="Logo obce" style={{ maxHeight: 32, maxWidth: 48, objectFit: 'contain' }} className="rounded" />
+              ) : (
+                <div className="w-8 h-8 bg-gov-gold rounded flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-gov-blue" />
+                </div>
+              )}
               <div>
                 <div className="font-bold text-sm leading-tight">Digitálna matrika</div>
                 <div className="text-xs text-blue-200 leading-tight">Asistent overovania</div>

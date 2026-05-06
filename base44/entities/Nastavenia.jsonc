@@ -70,6 +70,14 @@
       "type": "boolean",
       "title": "Zvukov\u00fd sign\u00e1l",
       "default": true
+    },
+    "logoObce": {
+      "type": "string",
+      "title": "Logo obce (base64)"
+    },
+    "sloganObce": {
+      "type": "string",
+      "title": "Slogan / podnadpis obce"
     }
   },
   "required": [
