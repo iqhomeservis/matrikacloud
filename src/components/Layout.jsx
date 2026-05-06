@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { BookOpen, PlusCircle, Settings, Shield, Archive, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import StatusBar from "./StatusBar";
@@ -7,6 +7,7 @@ import TamperError from "./TamperError";
 import { performHeartbeat, shouldRunHeartbeat, checkOfflineStatus } from "@/lib/heartbeat";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import KeyboardShortcutsModal from "./KeyboardShortcutsModal";
 
 const navItems = [
   { path: "/", label: "Nový záznam", icon: PlusCircle },
@@ -21,6 +22,8 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [licStatus, setLicStatus] = useState(null);
   const [tamperCode, setTamperCode] = useState(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkOfflineStatus();
@@ -74,13 +77,25 @@ export default function Layout() {
 
     runAntiTamper();
 
+    // Globálne Ctrl skratky
+    const handleGlobal = (e) => {
+      if (e.ctrlKey && e.key === "n") { e.preventDefault(); navigate("/"); }
+      if (e.ctrlKey && e.key === "k") { e.preventDefault(); navigate("/kniha"); }
+      if (e.ctrlKey && e.key === ",") { e.preventDefault(); navigate("/nastavenia"); }
+      if (e.ctrlKey && e.key === "/") { e.preventDefault(); setShortcutsOpen(true); }
+    };
+    window.addEventListener("keydown", handleGlobal);
+
     const loadLic = () => {
       base44.entities.Licencia.list("-created_date", 1)
         .then(list => { if (list[0]) setLicStatus(list[0].status); })
         .catch(() => {});
     };
     window.addEventListener("licencia-updated", loadLic);
-    return () => window.removeEventListener("licencia-updated", loadLic);
+    return () => {
+      window.removeEventListener("licencia-updated", loadLic);
+      window.removeEventListener("keydown", handleGlobal);
+    };
   }, []);
 
   const isRestricted = licStatus === "RESTRICTED" || licStatus === "REVOKED";
@@ -173,6 +188,18 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating help button */}
+      <button
+        onClick={() => setShortcutsOpen(true)}
+        title="Klávesové skratky (Ctrl+/)"
+        className="fixed z-[8000] bottom-20 right-5 w-10 h-10 rounded-full bg-slate-500 hover:bg-slate-600 text-white text-lg font-bold shadow-lg transition flex items-center justify-center"
+        style={{ lineHeight: 1 }}
+      >
+        ?
+      </button>
+
+      {shortcutsOpen && <KeyboardShortcutsModal onClose={() => setShortcutsOpen(false)} />}
     </div>
   );
 }
