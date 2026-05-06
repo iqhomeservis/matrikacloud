@@ -38,18 +38,40 @@ export default function PPDUzavierka() {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const W = 210;
     const margin = 14;
-    let y = 18;
+    let y = 14;
 
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 58, 110);
-    doc.text(cfg.obecNazov || "Obec", margin, y);
-    y += 7;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(80, 80, 80);
-    doc.text(`IČO: ${cfg.obecIco || "—"}  |  ${cfg.adresaUradu || ""}`, margin, y);
-    y += 8;
+    // Logo ak existuje
+    if (cfg.logoObce) {
+      try {
+        doc.addImage(cfg.logoObce, "PNG", margin, y, 20, 14, undefined, "FAST");
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 58, 110);
+        doc.text(cfg.obecNazov || "Obec", margin + 24, y + 8);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(80, 80, 80);
+        doc.text(`IČO: ${cfg.obecIco || "—"}  |  ${cfg.adresaUradu || ""}`, margin + 24, y + 14);
+        y += 20;
+      } catch {
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 58, 110);
+        doc.text(cfg.obecNazov || "Obec", margin, y + 6);
+        y += 14;
+      }
+    } else {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(30, 58, 110);
+      doc.text(cfg.obecNazov || "Obec", margin, y);
+      y += 7;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(80, 80, 80);
+      doc.text(`IČO: ${cfg.obecIco || "—"}  |  ${cfg.adresaUradu || ""}`, margin, y);
+      y += 8;
+    }
 
     doc.setDrawColor(180, 180, 180);
     doc.line(margin, y, W - margin, y);

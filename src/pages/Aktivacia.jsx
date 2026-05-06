@@ -38,6 +38,13 @@ export default function Aktivacia() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [eulaModal, setEulaModal] = useState(false);
+  const [obecLogo, setObecLogo] = useState("");
+
+  useEffect(() => {
+    base44.entities.Nastavenia.list("-created_date", 1)
+      .then(list => { if (list[0]?.logoObce) setObecLogo(list[0].logoObce); })
+      .catch(() => {});
+  }, []);
 
   // Disable browser back button
   useEffect(() => {
@@ -248,9 +255,13 @@ export default function Aktivacia() {
 
         {/* Logo + Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
+          {obecLogo ? (
+            <img src={obecLogo} alt="Logo obce" style={{ maxHeight: 64, maxWidth: 140, objectFit: 'contain' }} className="mx-auto mb-3" />
+          ) : (
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <BookOpen className="w-8 h-8 text-white" />
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-slate-900">Aktivácia produktu</h1>
           <p className="text-sm text-slate-500 mt-1">
             Pre začatie používania zadajte aktivačný kľúč, ktorý ste dostali pri zakúpení licencie.
