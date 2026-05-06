@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { generujPPDPdf } from "@/lib/ppdUtils";
-import { RefreshCw, Eye, Printer, X } from "lucide-react";
+import { RefreshCw, Eye, Printer, X, Pencil, Check, XCircle } from "lucide-react";
 
 export default function PPDEvidencia() {
   const [doklady, setDoklady] = useState([]);
@@ -12,6 +12,11 @@ export default function PPDEvidencia() {
   const [stornoId, setStornoId] = useState(null);
   const [stornoDovod, setStornoDovod] = useState("");
   const [stornoLoading, setStornoLoading] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editCislo, setEditCislo] = useState("");
+  const [editReason, setEditReason] = useState("");
+  const [editError, setEditError] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -61,6 +66,32 @@ export default function PPDEvidencia() {
     setStornoDovod("");
     await load();
     setStornoLoading(false);
+  };
+
+  const handleEditSave = async (doklad) => {
+    if (!editCislo.trim()) { setEditError("Číslo je povinné"); return; }
+    if (editReason.trim().length < 10) { setEditError("Dôvod musí mať aspoň 10 znakov"); return; }
+    setEditSaving(true);
+    const existing = await base44.entities.PPDDoklad.filter({ cisloDokladu: editCislo.trim() });
+    if (existing.some(x => x.id !== doklad.id)) {
+      setEditError("Toto číslo PPD je už použité");
+      setEditSaving(false);
+      return;
+    }
+    const oldCislo = doklad.cisloDokladu;
+    await base44.entities.PPDDoklad.update(doklad.id, { cisloDokladu: editCislo.trim() });
+    await base44.entities.AuditLog.create({
+      akcia: "UPDATE",
+      casovaPecat: new Date().toISOString(),
+      refZaznamId: doklad.zaznamId || "",
+      refPoradoveCislo: doklad.poradoveCisloZaznamu || "",
+      popis: `Zmena čísla PPD: PRED ${oldCislo} → PO ${editCislo.trim()} | Dôvod: ${editReason}`,
+    });
+    toast.success("Číslo PPD zmenené");
+    setEditId(null);
+    setEditError("");
+    setEditSaving(false);
+    await load();
   };
 
   const stavBadge = (stav) => {
@@ -127,7 +158,27 @@ export default function PPDEvidencia() {
             <tbody>
               {doklady.map((d, i) => (
                 <tr key={d.id} className={`border-b border-slate-100 ${i % 2 === 0 ? "" : "bg-slate-50/50"} ${d.jeStorno ? "bg-red-50/30" : ""}`}>
-                  <td className="px-4 py-2.5 font-mono text-xs font-bold text-gov-blue">{d.cisloDokladu}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs font-bold text-gov-blue">
+                    {editId === d.id ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1">
+                          <Input value={editCislo} onChange={e => { setEditCislo(e.target.value); setEditError(""); }} className="h-6 text-xs w-36 font-mono" autoFocus />
+                          <Button size="icon" className="h-6 w-6 bg-gov-blue text-white" onClick={() => handleEditSave(d)} disabled={editSaving}><Check className="w-3 h-3" /></Button>
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditId(null)}><XCircle className="w-3 h-3" /></Button>
+                        </div>
+                        <Input value={editReason} onChange={e => setEditReason(e.target.value)} className="h-6 text-xs w-48" placeholder="Dôvod (min. 10 znakov)…" />
+                        {editError && <p className="text-red-600 text-[10px]">{editError}</p>}
+                        <p className="text-amber-700 text-[10px] bg-amber-50 rounded px-1">⚠️ Uistite sa, že číslo nebolo použité</p>
+                      </div>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        {d.cisloDokladu}
+                        {d.stav === "VYDANY" && !d.jeStorno && (
+                          <button onClick={() => { setEditId(d.id); setEditCislo(d.cisloDokladu); setEditReason(""); setEditError(""); }} className="text-slate-300 hover:text-gov-blue transition" title="Upraviť číslo"><Pencil className="w-3 h-3" /></button>
+                        )}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-xs text-slate-600">
                     {d.datumVydania ? new Date(d.datumVydania).toLocaleDateString("sk-SK") : "—"}
                   </td>
