@@ -40,16 +40,81 @@ function rcToDatumNarodenia(rc) {
 
 // ─── PSČ lookup ──────────────────────────────────────────────────────────────
 const PSC_MESTA = {
-  "08001": "Prešov", "04001": "Košice", "81101": "Bratislava - Staré Mesto",
-  "83101": "Bratislava - Vajnory", "85101": "Bratislava - Petržalka",
-  "01001": "Žilina", "97401": "Banská Bystrica", "91101": "Trenčín",
-  "91701": "Trnava", "04901": "Rožňava", "06601": "Humenné",
-  "08501": "Bardejov", "06001": "Kežmarok", "05801": "Poprad",
-  "03201": "Liptovský Mikuláš", "03401": "Ružomberok", "02201": "Čadca",
-  "07101": "Michalovce", "07201": "Trebišov", "09101": "Stropkov",
-  "09201": "Snina", "08601": "Vranov nad Topľou", "05401": "Levoča",
-  "05201": "Spišská Nová Ves", "05501": "Gelnica", "08201": "Sabinov",
-  "08301": "Lipany", "08101": "Prešov",
+  // Okres Sabinov
+  "08201": "Prešov okolie",
+  "08203": "Červenica pri Sabinove",
+  "08204": "Drienica",
+  "08205": "Dubovica",
+  "08206": "Hanigovce",
+  "08207": "Hubošovce",
+  "08212": "Kamenica",
+  "08213": "Krivany",
+  "08214": "Krásna Lúka",
+  "08215": "Lúčka",
+  "08216": "Ľutina",
+  "08221": "Bzenov",
+  "08222": "Brezovica",
+  "08232": "Šarišské Michaľany",
+  "08233": "Šarišské Dravce",
+  "08235": "Šarišské Sokolovce",
+  "08236": "Milpoš",
+  "08237": "Tichý Potok",
+  "08238": "Torysa",
+  "08241": "Župčany",
+  "08242": "Pečovská Nová Ves",
+  "08243": "Ostrovany",
+  "08244": "Olejníkov",
+  "08252": "Hermanovce",
+  "08253": "Ražňany",
+  "08256": "Jakubova Voľa",
+  "08257": "Rožkovany",
+  "08261": "Renčišov",
+  "08263": "Uzovské Pekľany",
+  "08266": "Uzovský Šalgov",
+  "08267": "Uzovce",
+  "08271": "Lipany",
+  "08273": "Jarovnice",
+  "08274": "Ratvaj",
+  "08275": "Poloma",
+  "08276": "Nižný Slavkov",
+  "08301": "Sabinov",
+  // Okres Prešov
+  "08001": "Prešov",
+  "08005": "Prešov",
+  "08006": "Prešov",
+  "08101": "Prešov okolie",
+  "08106": "Ľubotice",
+  "08107": "Veľký Šariš",
+  // Ostatné hlavné mestá
+  "04001": "Košice",
+  "04011": "Košice - Západ",
+  "04022": "Košice - Sever",
+  "04023": "Košice - Juh",
+  "01001": "Žilina",
+  "97401": "Banská Bystrica",
+  "91101": "Trenčín",
+  "91701": "Trnava",
+  "03201": "Liptovský Mikuláš",
+  "05801": "Poprad",
+  "05201": "Spišská Nová Ves",
+  "06601": "Humenné",
+  "07101": "Michalovce",
+  "07201": "Trebišov",
+  "09101": "Stropkov",
+  "08501": "Bardejov",
+  "06001": "Kežmarok",
+  "05401": "Levoča",
+  "08601": "Vranov nad Topľou",
+  // Bratislava
+  "81101": "Bratislava - Staré Mesto",
+  "81102": "Bratislava - Staré Mesto",
+  "81103": "Bratislava - Staré Mesto",
+  "82101": "Bratislava - Ružinov",
+  "83101": "Bratislava - Nové Mesto",
+  "84101": "Bratislava - Dúbravka",
+  "85101": "Bratislava - Petržalka",
+  "85104": "Bratislava - Petržalka",
+  "80000": "Bratislava",
 };
 
 // FieldWrap must be outside component to avoid remount on every render
@@ -135,8 +200,20 @@ export default function NovyZaznam() {
   const [dateAutoFilled, setDateAutoFilled] = useState(false);
   const [pscError, setPscError] = useState(false);
   const [cityAutoFilled, setCityAutoFilled] = useState(false);
+  const [settings, setSettings] = useState(null);
 
-  useEffect(() => { loadActivePlugin(); loadLicencia(); }, []);
+  useEffect(() => { loadActivePlugin(); loadLicencia(); loadSettings(); }, []);
+
+  const loadSettings = async () => {
+    try {
+      const list = await base44.entities.Nastavenia.list("-created_date", 1);
+      if (list[0]) {
+        setSettings(list[0]);
+        const fee = list[0].poplatokListina ?? 2;
+        setForm(f => ({ ...f, poplatokEur: fee }));
+      }
+    } catch {}
+  };
 
   const loadLicencia = async () => {
     try {
@@ -153,6 +230,16 @@ export default function NovyZaznam() {
       setActivePlugin(scanner || plugins[0] || null);
     } catch { setActivePlugin(null); }
   };
+
+  // Update fee when typ changes
+  useEffect(() => {
+    if (!settings) return;
+    if (form.oslobodenyOdPoplatku) return;
+    const fee = form.typOverenia === "LISTINA"
+      ? (settings.poplatokListina ?? 2)
+      : (settings.poplatokPodpis ?? 2);
+    setForm(f => ({ ...f, poplatokEur: fee }));
+  }, [form.typOverenia, settings]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -425,8 +512,9 @@ export default function NovyZaznam() {
     setPscError(digits.length > 0 && !isValid);
     if (isValid) {
       const city = PSC_MESTA[digits] || "";
+      // Auto-fill ONLY if Mesto is empty
       if (city) {
-        setForm(f => ({ ...f, adresaPsc: formatted, adresaMesto: city }));
+        setForm(f => ({ ...f, adresaPsc: formatted, adresaMesto: f.adresaMesto || city }));
         setCityAutoFilled(true);
       } else {
         setCityAutoFilled(false);
@@ -745,15 +833,23 @@ export default function NovyZaznam() {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Checkbox id="oslobodeny" checked={form.oslobodenyOdPoplatku} onCheckedChange={v => { set("oslobodenyOdPoplatku", v); if (v) set("poplatokEur", 0); }} />
+                <Checkbox
+                  id="oslobodeny"
+                  checked={form.oslobodenyOdPoplatku}
+                  onCheckedChange={v => {
+                    set("oslobodenyOdPoplatku", v);
+                    if (v) {
+                      set("poplatokEur", 0);
+                    } else {
+                      const fee = form.typOverenia === "LISTINA"
+                        ? (settings?.poplatokListina ?? 2)
+                        : (settings?.poplatokPodpis ?? 2);
+                      set("poplatokEur", fee);
+                    }
+                  }}
+                />
                 <Label htmlFor="oslobodeny" className="text-sm text-slate-700">Oslobodený od poplatku</Label>
               </div>
-              {form.oslobodenyOdPoplatku && (
-                <div>
-                  <Label className="text-xs font-semibold text-slate-600 mb-1 block">Dôvod oslobodenia</Label>
-                  <Input value={form.dovodOslobodenia} onChange={e => set("dovodOslobodenia", e.target.value)} className="h-10" />
-                </div>
-              )}
             </div>
           </div>
 

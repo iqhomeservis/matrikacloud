@@ -249,11 +249,13 @@ export default function Nastavenia() {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Poplatok — listina (€)</Label>
-                <Input type="number" step="0.01" value={form.poplatokListina} onChange={e => set("poplatokListina", parseFloat(e.target.value))} className="h-10 font-mono" />
+                <Input type="number" step="0.10" min="0" max="999" value={form.poplatokListina} onChange={e => set("poplatokListina", parseFloat(e.target.value))} className="h-10 font-mono" />
+                <p className="text-xs text-slate-400 mt-1">{(form.poplatokListina || 0).toLocaleString("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</p>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-slate-600 mb-1 block">Poplatok — podpis (€)</Label>
-                <Input type="number" step="0.01" value={form.poplatokPodpis} onChange={e => set("poplatokPodpis", parseFloat(e.target.value))} className="h-10 font-mono" />
+                <Input type="number" step="0.10" min="0" max="999" value={form.poplatokPodpis} onChange={e => set("poplatokPodpis", parseFloat(e.target.value))} className="h-10 font-mono" />
+                <p className="text-xs text-slate-400 mt-1">{(form.poplatokPodpis || 0).toLocaleString("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</p>
               </div>
             </div>
           </div>
