@@ -14,6 +14,7 @@ import CanDialog from "../components/CanDialog";
 import ScannerLoader from "../components/ScannerLoader";
 import { generateHash, encryptField, formatPoradoveCislo, formatDateSK } from "../lib/matrikaUtils";
 import PPDModal from "../components/PPDModal";
+import MestoAutocomplete, { getObecByPsc, formatPsc } from "../components/MestoAutocomplete";
 
 // Parse SK date format "DD.MM.YYYY" → "YYYY-MM-DD"
 function parseDateSK(str) {
@@ -511,8 +512,9 @@ export default function NovyZaznam() {
     const isValid = digits.length === 5;
     setPscError(digits.length > 0 && !isValid);
     if (isValid) {
-      const city = PSC_MESTA[digits] || "";
-      // Auto-fill ONLY if Mesto is empty
+      // Try OBCE dataset first, then PSC_MESTA fallback
+      const obecItem = getObecByPsc(digits);
+      const city = obecItem ? obecItem[0] : (PSC_MESTA[digits] || "");
       if (city) {
         setForm(f => ({ ...f, adresaPsc: formatted, adresaMesto: f.adresaMesto || city }));
         setCityAutoFilled(true);
@@ -522,6 +524,14 @@ export default function NovyZaznam() {
     } else {
       setCityAutoFilled(false);
     }
+  };
+
+  const handleMestoSelect = (nazov, pscFormatted) => {
+    setForm(f => ({ ...f, adresaMesto: nazov, adresaPsc: pscFormatted }));
+    markManual("adresaMesto");
+    markManual("adresaPsc");
+    setCityAutoFilled(true);
+    setPscError(false);
   };
 
   const markManual = (field) => setFieldSources(fs => ({ ...fs, [field]: "manual" }));
@@ -696,11 +706,10 @@ export default function NovyZaznam() {
                 <div>
                   <Label className="text-xs font-semibold text-slate-600 mb-1 block">Mesto</Label>
                   <FieldWrap fieldSource={fieldSources["adresaMesto"]} value={form.adresaMesto}>
-                    <Input
+                    <MestoAutocomplete
                       value={form.adresaMesto}
-                      onChange={e => { set("adresaMesto", e.target.value); markManual("adresaMesto"); setCityAutoFilled(false); }}
-                      className="h-10 pr-7"
-                      placeholder="Prešov"
+                      onChange={(val) => { set("adresaMesto", val); markManual("adresaMesto"); setCityAutoFilled(false); }}
+                      onSelect={handleMestoSelect}
                       style={cityAutoFilled ? { borderColor: "#3b82f6", borderWidth: "2px" } : {}}
                     />
                   </FieldWrap>
