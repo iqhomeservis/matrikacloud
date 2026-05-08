@@ -53,18 +53,21 @@ export default function PPDPrintView({ doklad, nastavenia, onClose }) {
       {/* Print CSS — injected globally */}
       <style>{`
         @media print {
-          body > * { display: none !important; }
-          .ppd-print-overlay { display: block !important; position: static !important; background: white !important; }
-          .ppd-print-overlay .ppd-no-print { display: none !important; }
+          body * { visibility: hidden !important; }
+          .ppd-print-view, .ppd-print-view * { visibility: visible !important; }
           .ppd-print-view {
-            display: block !important;
-            font-family: Arial, sans-serif !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            font-family: Arial, Helvetica, sans-serif !important;
             font-size: 12pt !important;
             color: #000 !important;
-            max-width: 148mm !important;
-            margin: 0 auto !important;
+            background: white !important;
             padding: 8mm !important;
+            box-sizing: border-box !important;
           }
+          .ppd-no-print { display: none !important; }
         }
       `}</style>
 
